@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Jason Blog</title>
+    <link>https://example.org/posts/</link>
+    <description>Recent content in Posts on Jason Blog</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Sun, 03 Aug 2025 21:37:15 +0800</lastBuildDate>
+    <atom:link href="https://example.org/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>First Post</title>
+      <link>https://example.org/posts/first-post/</link>
+      <pubDate>Sun, 03 Aug 2025 21:37:15 +0800</pubDate>
+      <guid>https://example.org/posts/first-post/</guid>
+      <description>&lt;p&gt;My first blog here~&lt;/p&gt;&#xA;&lt;p&gt;This is Jason&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
