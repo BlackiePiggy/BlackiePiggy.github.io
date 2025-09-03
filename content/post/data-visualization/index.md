@@ -1,5 +1,5 @@
 ---
-title: 📈 Communicate your results effectively with the best data visualizations
+title: 上海交通大学23M感知第二党支部实践团赴宜宾市叙州区开展联合党日活动
 summary: Use popular tools such as Plotly, Mermaid, and data frames.
 date: 2023-10-25
 authors:
