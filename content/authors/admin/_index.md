@@ -1,20 +1,20 @@
 ---
 # Display name
-title: 吳健雄
+title: 李嘉渝
 
 # Name pronunciation (optional)
-name_pronunciation: Chien Shiung Wu
+name_pronunciation: Li Jiayu
 
 # Full name (for SEO)
-first_name: Shiung Wu
-last_name: Chien
+first_name: Li
+last_name: Jiayu
 
 # Pronouns (optional)
-pronouns: she/her
+pronouns: He
 
 # Status emoji
 status:
-  icon: ☕️
+  icon: 💼
 
 # Is this the primary user of the site?
 superuser: true
@@ -23,87 +23,78 @@ superuser: true
 highlight_name: true
 
 # Role/position/tagline
-role: Chief Scientist
+role: Master
 
 # Organizations/Affiliations to display in Biography blox
 organizations:
-  - name: OpenAI
-    url: https://openai.com/
+  - name: Institute of Sensing & Navigation, SEIEE, SJTU
+    url: https://nls.sjtu.edu.cn
 
 # Social network links
 # Need to use another icon? Simply download the SVG icon to your `assets/media/icons/` folder.
 profiles:
   - icon: at-symbol
-    url: 'mailto:your-email@example.com'
+    url: 'mailto:jason_lee@sjtu.edu.cn'
     label: E-mail Me
-  - icon: brands/x
-    url: https://twitter.com/GetResearchDev
-  - icon: brands/instagram
-    url: https://www.instagram.com/
+  #- icon: brands/x
+  #  url: https://twitter.com/GetResearchDev
+  #- icon: brands/instagram
+  #  url: https://www.instagram.com/
   - icon: brands/github
-    url: https://github.com/gcushen
-  - icon: brands/linkedin
-    url: https://www.linkedin.com/
-  - icon: academicons/google-scholar
-    url: https://scholar.google.com/
-  - icon: academicons/orcid
-    url: https://orcid.org/
+    url: https://github.com/BlackiePiggy
+  #- icon: brands/linkedin
+  #  url: https://www.linkedin.com/
+  #- icon: academicons/google-scholar
+  #  url: https://scholar.google.com/
+  #- icon: academicons/orcid
+  #  url: https://orcid.org/
 
 interests:
+  - AI for Navigation
   - Artificial Intelligence
-  - Computational Linguistics
-  - Information Retrieval
+  - GNSS Positioning
 
 education:
-  - area: PhD Artificial Intelligence
-    institution: Stanford University
-    date_start: 2016-01-01
-    date_end: 2020-12-31
+  - area: MSc Electrical Engineering
+    institution: Shanghai Jiao Tong University
+    date_start: 2023-09-01
+    date_end: 2026-05-01
     summary: |
-      Thesis on _Why LLMs are awesome_. Supervised by [Prof Joe Smith](https://example.com). Presented papers at 5 IEEE conferences with the contributions being published in 2 Springer journals.
-    button:
-      text: 'Read Thesis'
-      url: 'https://example.com'
-  - area: MEng Artificial Intelligence
-    institution: Massachusetts Institute of Technology
-    date_start: 2016-01-01
-    date_end: 2020-12-31
-    summary: |
-      GPA: 3.8/4.0
+      GPA: 3.92/4.0
 
       Courses included:
       - lorem ipsum dolor sit amet, consectetur adipiscing elit
       - lorem ipsum dolor sit amet, consectetur adipiscing elit
       - lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - area: BSc Artificial Intelligence
-    institution: Massachusetts Institute of Technology
-    date_start: 2016-01-01
-    date_end: 2020-12-31
+  - area: BSc Instrumentation
+    institution: Hefei University of Technology
+    date_start: 2019-09-01
+    date_end: 2023-06-01
     summary: |
-      GPA: 3.4/4.0
+      GPA: 91.1/100
       
       Courses included:
       - lorem ipsum dolor sit amet, consectetur adipiscing elit
       - lorem ipsum dolor sit amet, consectetur adipiscing elit
       - lorem ipsum dolor sit amet, consectetur adipiscing elit
 work:
-  - position: Director of Cloud Infrastructure
-    company_name: GenCoin
+  - position: 字节跳动 | 后端研发工程师
+    company_name: 
     company_url: ''
     company_logo: ''
-    date_start: 2021-01-01
-    date_end: ''
-    summary: |2-
+    date_start: 2025-06-04
+    date_end: 2025-09-10
+    summary: |
       Responsibilities include:
       - lorem ipsum dolor sit amet, consectetur adipiscing elit
       - lorem ipsum dolor sit amet, consectetur adipiscing elit
       - lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - position: Backend Software Engineer
-    company_name: X
+  - position: NXP恩智浦半导体 | 嵌入式系统工程师
+    company_name: 
     company_url: ''
     company_logo: ''
-    date_start: 2016-01-01
-    date_end: 2020-12-31
+    date_start: 2023-04-01
+    date_end: 2023-08-31
     summary: |
       Responsibilities include:
       - Migrated infrastructure to a new data center
