@@ -90,25 +90,33 @@ $$
 
 计算逻辑如下：
 
+建模序列：
 
 $$
-建模序列：x_t,\overline{y_t} \quad (t=1,2,\cdots,N)\\
-\\
-\overline{y_t}=\frac{1}{m}{\sum_{i=1}^{m}{y_{ti}}}\\
-\\
+x_t,\overline{y_t} \quad (t=1,2,\cdots,N)
+$$
+
+$$\overline{y_t}=\frac{1}{m}{\sum_{i=1}^{m}{y_{ti}}}$$
+
+$$
 \begin{cases}
 l_{xx}=\sum_{t=1}^{N}{{x_t}^2-\frac{1}{N}（\sum_{t=1}^{N}{{x_t}）^2}}\\
 l_{xy}=\sum_{t=1}^{N}{{x_t}{\overline{y_t}}-\frac{1}{N}\sum_{t=1}^{N}{{x_t}\sum_{t=1}^{N}{{\overline{y_t}}}}}\\
 l_{yy}=\sum_{t=1}^{N}{{\overline{y_t}}^2-\frac{1}{N}（\sum_{t=1}^{N}{{\overline{y_t}}）^2}}\\
-\end{cases}\\
-\\
+\end{cases}
+$$
+
+$$
 \begin{cases}
 b=\frac{l_{xy}}{l_{xx}}\\
 b_0=\overline{y}-b\overline{x}
-\end{cases}\\  
-
-\Rightarrow\hat{y}=b_0+bx
+\end{cases}
 $$
+
+$$
+\hat{y}=b_0+bx
+$$
+
 
 ### 3.3.2 程序实现
 
