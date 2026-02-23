@@ -1,0 +1,21 @@
+backend:
+  name: github
+  repo: BlackiePiggy/BlackiePiggy.github.io
+  branch: main
+
+site_domain: blackiepiggy-github-io.pages.dev
+
+media_folder: "static/uploads"
+public_folder: "/uploads"
+
+collections:
+  - name: "post"
+    label: "Posts"
+    folder: "content/post"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Draft", name: "draft", widget: "boolean", default: false }
+      - { label: "Body", name: "body", widget: "markdown" }
