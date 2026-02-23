@@ -4,6 +4,8 @@ backend:
   branch: main
 
 site_domain: blackiepiggy-github-io.pages.dev
+base_url: https://oauth.leshanlijjayu.workers.dev
+auth_endpoint: auth
 
 media_folder: "static/uploads"
 public_folder: "/uploads"
