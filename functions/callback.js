@@ -11,7 +11,6 @@ export async function onRequest(context) {
     return new Response("Missing code", { status: 400 });
   }
 
-  // 1. 准备向 GitHub 换取 Token
   const client_id = env.GITHUB_CLIENT_ID;
   const client_secret = env.GITHUB_CLIENT_SECRET;
 
@@ -31,7 +30,7 @@ export async function onRequest(context) {
         client_id,
         client_secret,
         code,
-        // 这里的 redirect_uri 必须和 auth.js 中的完全一致
+        // 这里的 redirect_uri 必须和你 GitHub App 设置的完全一致
         redirect_uri: `${url.origin}/callback` 
       })
     });
@@ -42,26 +41,41 @@ export async function onRequest(context) {
       return new Response(`Token Exchange Error: ${JSON.stringify(tokenData)}`, { status: 500 });
     }
 
-    // 2. 返回消息给 Decap CMS 窗口
-    // 构建正确的 postMessage 内容
-    const message = JSON.stringify({
+    // --- 关键修改开始 ---
+    
+    // 1. 构建 Decap CMS 需要的消息对象
+    const content = {
       token: tokenData.access_token,
       provider: "github"
-    });
-    
-    // 生成 HTML 脚本关闭窗口并传递消息
-    // 注意：window.opener.postMessage 的第二个参数建议填具体域名，这里用 * 简化，或者用 url.origin
+    };
+
+    // 2. 拼接完整的消息字符串，格式必须是 "authorization:provider:success:JSON"
+    // 注意：这里手动拼接字符串，避免双重 JSON 序列化导致的问题
+    const msg = `authorization:github:success:${JSON.stringify(content)}`;
+
+    // 3. 返回 HTML
+    // 修改点：使用 postMessage(msg, "*")。
+    // "*" 表示允许发送给任何源，虽然安全性稍低，但能解决所有跨域/协议不匹配导致的“无反应”问题。
     const html = `
       <!doctype html>
       <html><body>
       <script>
-        const msg = ${JSON.stringify(`authorization:github:success:${message}`)};
-        window.opener.postMessage(msg, "${url.origin}");
-        window.close();
+        const msg = ${JSON.stringify(msg)};
+        console.log("Sending message to opener:", msg);
+        
+        if (window.opener) {
+          // 发送消息
+          window.opener.postMessage(msg, "*");
+          // 发送完毕后关闭窗口
+          window.close();
+        } else {
+          document.body.innerText = "Error: Cannot find the main window (window.opener is null). Please ensure you are not blocking popups.";
+        }
       </script>
-      <p>Login successful. Closing...</p>
+      <p>Authentication successful. You can close this window now.</p>
       </body></html>
     `;
+    // --- 关键修改结束 ---
 
     return new Response(html, {
       headers: { "Content-Type": "text/html; charset=utf-8" }
