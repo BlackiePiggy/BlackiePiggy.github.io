@@ -1,59 +1,116 @@
-# 后端配置：使用 Git Gateway 代理以避免管理员直接访问 Git 仓库
 backend:
   name: git-gateway
-  branch: main # 确保与你 GitHub 的主分支名称一致
+  branch: main # 请确认你的分支名
 
-# 媒体配置：Hugo 静态资源存放于 static，但发布后路径不含 static
 media_folder: "static/images/uploads"
 public_folder: "/images/uploads"
 
-# 内容集合：定义你的文章结构
 collections:
+  # 1. 出版物 (Publications) - 嵌套结构
   - name: "publication"
     label: "Publications"
     folder: "content/publication"
     extension: "md"
     format: "frontmatter"
     create: true
-    # 修复错误：添加 depth 属性
     nested:
-      depth: 10 # 允许最多嵌套 10 层文件夹，足够覆盖你的 GEOG 结构
-      show_links: true
-    # 针对 Hugo Leaf Bundle 的特殊设置
-    path: "{{slug}}/index" 
+      depth: 2
+    path: "{{slug}}/index"
     slug: "{{slug}}"
     fields:
       - { label: "Title", name: "title", widget: "string" }
-      - { label: "Authors", name: "authors", widget: "list", summary: "{{fields.author}}" }
+      - { label: "Authors", name: "authors", widget: "list" }
       - { label: "Publish Date", name: "date", widget: "datetime" }
-      - { label: "Publication Date (Schedule)", name: "publishDate", widget: "datetime" }
-      
       - { label: "Publication Type", name: "publication_types", widget: "list" }
       - { label: "Publication Name", name: "publication", widget: "string" }
-      - { label: "Publication Abbreviation", name: "publication_short", widget: "string" }
-      
       - { label: "Abstract", name: "abstract", widget: "text" }
       - { label: "Summary", name: "summary", widget: "text" }
-      
       - { label: "Tags", name: "tags", widget: "list" }
       - { label: "Featured", name: "featured", widget: "boolean", default: false }
-      
-      - label: "Links"
-        name: "links"
-        widget: "list"
-        fields:
-          - { label: "Type", name: "type", widget: "string" }
-          - { label: "URL", name: "url", widget: "string" }
-
-      - label: "Image"
-        name: "image"
-        widget: "object"
-        fields:
-          - { label: "Caption", name: "caption", widget: "string", required: false }
-          - { label: "Focal Point", name: "focal_point", widget: "string", default: "", required: false }
-          - { label: "Preview Only", name: "preview_only", widget: "boolean", default: false }
-
-      - { label: "Projects", name: "projects", widget: "list", required: false }
-      - { label: "Slides", name: "slides", widget: "string", required: false, default: "" }
-      
       - { label: "Body", name: "body", widget: "markdown" }
+
+  # 2. 博客文章 (Posts)
+  - name: "post"
+    label: "Posts"
+    folder: "content/post"
+    extension: "md"
+    format: "frontmatter"
+    create: true
+    nested:
+      depth: 2
+    path: "{{slug}}/index"
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Summary", name: "summary", widget: "text", required: false }
+      - { label: "Tags", name: "tags", widget: "list" }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  # 3. 项目 (Projects)
+  - name: "project"
+    label: "Projects"
+    folder: "content/project"
+    extension: "md"
+    format: "frontmatter"
+    create: true
+    nested:
+      depth: 2
+    path: "{{slug}}/index"
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Summary", name: "summary", widget: "text" }
+      - { label: "Tags", name: "tags", widget: "list" }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  # 4. 教学 (Teaching)
+  - name: "teaching"
+    label: "Teaching"
+    folder: "content/teaching"
+    extension: "md"
+    format: "frontmatter"
+    create: true
+    nested:
+      depth: 2
+    path: "{{slug}}/index"
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  # 5. 活动 (Events)
+  - name: "event"
+    label: "Events"
+    folder: "content/event"
+    extension: "md"
+    format: "frontmatter"
+    create: true
+    nested:
+      depth: 2
+    path: "{{slug}}/index"
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Location", name: "location", widget: "string", required: false }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  # 6. 单页面管理 (如 Experience, Projects.md)
+  - name: "pages"
+    label: "Pages"
+    files:
+      - label: "Experience"
+        name: "experience"
+        file: "content/experience.md"
+        fields:
+          - { label: "Title", name: "title", widget: "string" }
+          - { label: "Body", name: "body", widget: "markdown" }
+      - label: "Projects Page"
+        name: "projects_page"
+        file: "content/projects.md"
+        fields:
+          - { label: "Title", name: "title", widget: "string" }
+          - { label: "Body", name: "body", widget: "markdown" }
