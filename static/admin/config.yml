@@ -11,21 +11,18 @@ public_folder: "/images/uploads"
 collections:
   - name: "publication"
     label: "Publications"
-    folder: "content/publication" # 根目录
+    folder: "content/publication"
     extension: "md"
     format: "frontmatter"
     create: true
-    # 关键设置：开启嵌套文件夹识别
+    # 修复错误：添加 depth 属性
     nested:
+      depth: 10 # 允许最多嵌套 10 层文件夹，足够覆盖你的 GEOG 结构
       show_links: true
-    # 关键设置：指定文件名为 index
+    # 针对 Hugo Leaf Bundle 的特殊设置
     path: "{{slug}}/index" 
-    media_folder: ""
-    public_folder: ""
     slug: "{{slug}}"
     fields:
       - { label: "Title", name: "title", widget: "string" }
       - { label: "Publish Date", name: "date", widget: "datetime" }
-      # 如果你的图片叫 featured.jpg，可以添加下面这行
-      - { label: "Featured Image", name: "image", widget: "image", default: "featured.jpg", required: false }
       - { label: "Body", name: "body", widget: "markdown" }
