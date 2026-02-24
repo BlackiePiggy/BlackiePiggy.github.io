@@ -61,8 +61,20 @@ collections:
     fields:
       - { label: "Title", name: "title", widget: "string" }
       - { label: "Date", name: "date", widget: "datetime" }
-      - { label: "Summary", name: "summary", widget: "text" }
+      
+      # 匹配你文件中的 links 结构
+      - label: "Links"
+        name: "links"
+        widget: "list"
+        fields:
+          - { label: "Type", name: "type", widget: "string" }
+          - { label: "URL", name: "url", widget: "string", required: false }
+
       - { label: "Tags", name: "tags", widget: "list" }
+      
+      # 添加摘要支持 (对应 之前的内容)
+      - { label: "Summary", name: "summary", widget: "text", required: false, hint: "如果为空，Hugo 将使用 前的内容" }
+      
       - { label: "Body", name: "body", widget: "markdown" }
 
   # 4. 教学 (Teaching)
