@@ -24,5 +24,36 @@ collections:
     slug: "{{slug}}"
     fields:
       - { label: "Title", name: "title", widget: "string" }
+      - { label: "Authors", name: "authors", widget: "list", summary: "{{fields.author}}" }
       - { label: "Publish Date", name: "date", widget: "datetime" }
+      - { label: "Publication Date (Schedule)", name: "publishDate", widget: "datetime" }
+      
+      - { label: "Publication Type", name: "publication_types", widget: "list" }
+      - { label: "Publication Name", name: "publication", widget: "string" }
+      - { label: "Publication Abbreviation", name: "publication_short", widget: "string" }
+      
+      - { label: "Abstract", name: "abstract", widget: "text" }
+      - { label: "Summary", name: "summary", widget: "text" }
+      
+      - { label: "Tags", name: "tags", widget: "list" }
+      - { label: "Featured", name: "featured", widget: "boolean", default: false }
+      
+      - label: "Links"
+        name: "links"
+        widget: "list"
+        fields:
+          - { label: "Type", name: "type", widget: "string" }
+          - { label: "URL", name: "url", widget: "string" }
+
+      - label: "Image"
+        name: "image"
+        widget: "object"
+        fields:
+          - { label: "Caption", name: "caption", widget: "string", required: false }
+          - { label: "Focal Point", name: "focal_point", widget: "string", default: "", required: false }
+          - { label: "Preview Only", name: "preview_only", widget: "boolean", default: false }
+
+      - { label: "Projects", name: "projects", widget: "list", required: false }
+      - { label: "Slides", name: "slides", widget: "string", required: false, default: "" }
+      
       - { label: "Body", name: "body", widget: "markdown" }
