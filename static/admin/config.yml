@@ -9,13 +9,23 @@ public_folder: "/images/uploads"
 
 # 内容集合：定义你的文章结构
 collections:
-  - name: "blog"
-    label: "Blog"
-    folder: "content/publication" # 请确认为你 Hugo 文章的实际路径
+  - name: "publication"
+    label: "Publications"
+    folder: "content/publication" # 根目录
+    extension: "md"
+    format: "frontmatter"
     create: true
-    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    # 关键设置：开启嵌套文件夹识别
+    nested:
+      show_links: true
+    # 关键设置：指定文件名为 index
+    path: "{{slug}}/index" 
+    media_folder: ""
+    public_folder: ""
+    slug: "{{slug}}"
     fields:
       - { label: "Title", name: "title", widget: "string" }
       - { label: "Publish Date", name: "date", widget: "datetime" }
-      - { label: "Featured Image", name: "thumbnail", widget: "image", required: false }
+      # 如果你的图片叫 featured.jpg，可以添加下面这行
+      - { label: "Featured Image", name: "image", widget: "image", default: "featured.jpg", required: false }
       - { label: "Body", name: "body", widget: "markdown" }
