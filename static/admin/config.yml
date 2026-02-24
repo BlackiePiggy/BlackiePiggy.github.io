@@ -2,7 +2,7 @@ backend:
   name: github
   repo: BlackiePiggy/BlackiePiggy.github.io
   branch: main
-  base_url: https://oauth.leshanlijjayu.workers.dev
+  base_url: https://blackiepiggy-github-io.pages.dev  # 改回你的博客域名
   auth_endpoint: auth
 
 site_domain: blackiepiggy-github-io.pages.dev
