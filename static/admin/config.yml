@@ -1,23 +1,21 @@
+# 后端配置：使用 Git Gateway 代理以避免管理员直接访问 Git 仓库
 backend:
-  name: github
-  repo: BlackiePiggy/BlackiePiggy.github.io
-  branch: main
-  base_url: https://blackiepiggy-github-io.pages.dev  # 改回你的博客域名
-  auth_endpoint: auth
+  name: git-gateway
+  branch: main # 确保与你 GitHub 的主分支名称一致
 
-#site_domain: blackiepiggy-github-io.pages.dev
+# 媒体配置：Hugo 静态资源存放于 static，但发布后路径不含 static
+media_folder: "static/images/uploads"
+public_folder: "/images/uploads"
 
-media_folder: "static/uploads"
-public_folder: "/uploads"
-
+# 内容集合：定义你的文章结构
 collections:
-  - name: "post"
-    label: "Posts"
-    folder: "content/post"
+  - name: "blog"
+    label: "Blog"
+    folder: "content/posts" # 请确认为你 Hugo 文章的实际路径
     create: true
-    slug: "{{slug}}"
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     fields:
       - { label: "Title", name: "title", widget: "string" }
-      - { label: "Date", name: "date", widget: "datetime" }
-      - { label: "Draft", name: "draft", widget: "boolean", default: false }
+      - { label: "Publish Date", name: "date", widget: "datetime" }
+      - { label: "Featured Image", name: "thumbnail", widget: "image", required: false }
       - { label: "Body", name: "body", widget: "markdown" }
