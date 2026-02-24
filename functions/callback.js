@@ -27,51 +27,36 @@ export async function onRequest(context) {
     });
 
     const tokenData = await tokenResponse.json();
-    if (tokenData.error) return new Response(`Token Error: ${JSON.stringify(tokenData)}`, { status: 500 });
-
-    // 调试模式：不自动关闭，打印详细信息
+    
+    // 构造 Decap CMS 需要的消息
     const content = {
       token: tokenData.access_token,
       provider: "github"
     };
     const msg = `authorization:github:success:${JSON.stringify(content)}`;
 
+    // 返回自动执行脚本
     const html = `
       <!doctype html>
-      <html>
-        <body style="font-family: sans-serif; padding: 20px;">
-          <h3>调试模式 (Debug Mode)</h3>
-          <p><strong>1. Token 获取状态:</strong> ✅ 成功</p>
-          <p><strong>2. 准备发送的消息:</strong></p>
-          <code style="background: #eee; padding: 5px; display: block; word-break: break-all;">${msg}</code>
-          <p><strong>3. Window.opener 状态:</strong> <span id="opener-status">检测中...</span></p>
-          
-          <script>
-            const msg = ${JSON.stringify(msg)};
-            const statusSpan = document.getElementById("opener-status");
-            
-            if (window.opener) {
-              statusSpan.innerText = "✅ 存在 (Connected)";
-              statusSpan.style.color = "green";
-              
-              // 尝试发送消息
-              try {
-                window.opener.postMessage(msg, "*");
-                document.body.insertAdjacentHTML('beforeend', '<p>📨 消息已通过 postMessage 发送。</p>');
-              } catch (e) {
-                document.body.insertAdjacentHTML('beforeend', '<p style="color:red">❌ 发送失败: ' + e.message + '</p>');
-              }
-            } else {
-              statusSpan.innerText = "❌ 丢失 (Null)";
-              statusSpan.style.color = "red";
-              document.body.insertAdjacentHTML('beforeend', '<p>原因推测：浏览器安全策略阻止了窗口通信，或者你是直接在新标签页打开了这个链接。</p>');
-            }
-          </script>
-        </body>
-      </html>
+      <html><body>
+      <script>
+        const msg = ${JSON.stringify(msg)};
+        // 使用 window.location.origin 确保源匹配
+        const targetOrigin = window.location.origin;
+        
+        if (window.opener) {
+          console.log("Sending message to opener:", targetOrigin);
+          window.opener.postMessage(msg, targetOrigin);
+          // 稍微延迟后关闭，给主窗口一点处理时间
+          setTimeout(() => { window.close(); }, 50);
+        }
+      </script>
+      </body></html>
     `;
 
-    return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+    return new Response(html, {
+      headers: { "Content-Type": "text/html; charset=utf-8" }
+    });
 
   } catch (err) {
     return new Response(`Server Error: ${err.message}`, { status: 500 });
