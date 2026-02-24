@@ -4,19 +4,11 @@ export async function onRequest(context) {
   const code = url.searchParams.get("code");
   const error = url.searchParams.get("error");
 
-  if (error) {
-    return new Response(`GitHub Error: ${error}`, { status: 400 });
-  }
-  if (!code) {
-    return new Response("Missing code", { status: 400 });
-  }
+  if (error) return new Response(`GitHub Error: ${error}`, { status: 400 });
+  if (!code) return new Response("Missing code", { status: 400 });
 
   const client_id = env.GITHUB_CLIENT_ID;
   const client_secret = env.GITHUB_CLIENT_SECRET;
-
-  if (!client_id || !client_secret) {
-    return new Response("Missing Secrets", { status: 500 });
-  }
 
   try {
     const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
@@ -30,56 +22,56 @@ export async function onRequest(context) {
         client_id,
         client_secret,
         code,
-        // 这里的 redirect_uri 必须和你 GitHub App 设置的完全一致
-        redirect_uri: `${url.origin}/callback` 
+        redirect_uri: `${url.origin}/callback`
       })
     });
 
     const tokenData = await tokenResponse.json();
+    if (tokenData.error) return new Response(`Token Error: ${JSON.stringify(tokenData)}`, { status: 500 });
 
-    if (tokenData.error) {
-      return new Response(`Token Exchange Error: ${JSON.stringify(tokenData)}`, { status: 500 });
-    }
-
-    // --- 关键修改开始 ---
-    
-    // 1. 构建 Decap CMS 需要的消息对象
+    // 调试模式：不自动关闭，打印详细信息
     const content = {
       token: tokenData.access_token,
       provider: "github"
     };
-
-    // 2. 拼接完整的消息字符串，格式必须是 "authorization:provider:success:JSON"
-    // 注意：这里手动拼接字符串，避免双重 JSON 序列化导致的问题
     const msg = `authorization:github:success:${JSON.stringify(content)}`;
 
-    // 3. 返回 HTML
-    // 修改点：使用 postMessage(msg, "*")。
-    // "*" 表示允许发送给任何源，虽然安全性稍低，但能解决所有跨域/协议不匹配导致的“无反应”问题。
     const html = `
       <!doctype html>
-      <html><body>
-      <script>
-        const msg = ${JSON.stringify(msg)};
-        console.log("Sending message to opener:", msg);
-        
-        if (window.opener) {
-          // 发送消息
-          window.opener.postMessage(msg, "*");
-          // 发送完毕后关闭窗口
-          window.close();
-        } else {
-          document.body.innerText = "Error: Cannot find the main window (window.opener is null). Please ensure you are not blocking popups.";
-        }
-      </script>
-      <p>Authentication successful. You can close this window now.</p>
-      </body></html>
+      <html>
+        <body style="font-family: sans-serif; padding: 20px;">
+          <h3>调试模式 (Debug Mode)</h3>
+          <p><strong>1. Token 获取状态:</strong> ✅ 成功</p>
+          <p><strong>2. 准备发送的消息:</strong></p>
+          <code style="background: #eee; padding: 5px; display: block; word-break: break-all;">${msg}</code>
+          <p><strong>3. Window.opener 状态:</strong> <span id="opener-status">检测中...</span></p>
+          
+          <script>
+            const msg = ${JSON.stringify(msg)};
+            const statusSpan = document.getElementById("opener-status");
+            
+            if (window.opener) {
+              statusSpan.innerText = "✅ 存在 (Connected)";
+              statusSpan.style.color = "green";
+              
+              // 尝试发送消息
+              try {
+                window.opener.postMessage(msg, "*");
+                document.body.insertAdjacentHTML('beforeend', '<p>📨 消息已通过 postMessage 发送。</p>');
+              } catch (e) {
+                document.body.insertAdjacentHTML('beforeend', '<p style="color:red">❌ 发送失败: ' + e.message + '</p>');
+              }
+            } else {
+              statusSpan.innerText = "❌ 丢失 (Null)";
+              statusSpan.style.color = "red";
+              document.body.insertAdjacentHTML('beforeend', '<p>原因推测：浏览器安全策略阻止了窗口通信，或者你是直接在新标签页打开了这个链接。</p>');
+            }
+          </script>
+        </body>
+      </html>
     `;
-    // --- 关键修改结束 ---
 
-    return new Response(html, {
-      headers: { "Content-Type": "text/html; charset=utf-8" }
-    });
+    return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
 
   } catch (err) {
     return new Response(`Server Error: ${err.message}`, { status: 500 });
