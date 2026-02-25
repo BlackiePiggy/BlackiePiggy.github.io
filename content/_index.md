@@ -28,7 +28,7 @@ sections:
         color: black
         image:
           # Add your image background to `assets/media/`.
-          filename: stacked-peaks.svg
+          filename: bg2.jpg
           filters:
             brightness: 1.0
           size: cover
@@ -52,7 +52,7 @@ sections:
       title: Featured Publications
       filters:
         folders:
-          - publication
+          - publications
         featured_only: true
     design:
       view: article-grid
@@ -63,7 +63,7 @@ sections:
       text: ""
       filters:
         folders:
-          - publication
+          - publications
         exclude_featured: false
     design:
       view: citation
@@ -74,7 +74,7 @@ sections:
       title: Projects
       filters:
         folders:
-          - project
+          - projects
       count: 8
     design:
       view: article-grid

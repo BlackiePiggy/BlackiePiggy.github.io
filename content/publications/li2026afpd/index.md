@@ -9,10 +9,10 @@ authors:
 - Yabing Wang
 - Ling Pei
 author_notes:
-date: "2025-09-01T00:00:00Z"
+date: "2026-02-03T00:00:00Z"
 
 # Schedule page publish date (NOT publication's date).
-publishDate: "2025-09-01T00:00:00Z"
+publishDate: "2026-02-03T00:00:00Z"
 
 # Publication type.
 # Accepts a single type but formatted as a YAML list (for Hugo requirements).
@@ -41,7 +41,7 @@ links:
 # Featured image
 # To use, add an image named `featured.jpg/png` to your page's folder. 
 image:
-  caption: 'AFPD: [**structure**]'
+  caption: 'AFPD'
   focal_point: ""
   preview_only: false
 
