@@ -14,7 +14,7 @@ pronouns: He
 
 # Status emoji
 status:
-  icon: 💼
+  icon: 🏂
 
 # Is this the primary user of the site?
 superuser: true
@@ -63,9 +63,9 @@ education:
       GPA: 3.92/4.0
 
       Courses included:
-      - lorem ipsum dolor sit amet, consectetur adipiscing elit
-      - lorem ipsum dolor sit amet, consectetur adipiscing elit
-      - lorem ipsum dolor sit amet, consectetur adipiscing elit
+      - 导航定位相关课程：
+      - 数理基础课程：
+      - 其他课程：
   - area: BSc Instrumentation
     institution: Hefei University of Technology
     date_start: 2019-09-01
@@ -74,47 +74,67 @@ education:
       GPA: 91.1/100
       
       Courses included:
-      - lorem ipsum dolor sit amet, consectetur adipiscing elit
-      - lorem ipsum dolor sit amet, consectetur adipiscing elit
-      - lorem ipsum dolor sit amet, consectetur adipiscing elit
+      - 电子相关课程：
+      - 计算机相关课程：
+      - 数理基础课程：
+      - 其他课程：
 work:
-  - position: 字节跳动 | 后端研发工程师
-    company_name: 
+  - position: 阿里巴巴 高德地图 | 大模型算法工程师
+    company_name: App定位研发部 - 北京朝阳
+    company_url: 'https://gaode.com/'
+    company_logo: 'https://a.amap.com/pc/static/img/amaplogo.png'
+    date_start: 2026-05-31
+    date_end: 2030-05-31
+    summary: |
+      Responsibilities include:
+      - 等待入职
+  - position: 字节跳动 抖音| 后端研发工程师
+    company_name: 汽水音乐、音乐人平台 - 上海杨浦
     company_url: ''
     company_logo: ''
     date_start: 2025-06-04
     date_end: 2025-09-10
     summary: |
       Responsibilities include:
-      - lorem ipsum dolor sit amet, consectetur adipiscing elit
-      - lorem ipsum dolor sit amet, consectetur adipiscing elit
-      - lorem ipsum dolor sit amet, consectetur adipiscing elit
+      - 模型选型与评测： 深度调研并测评了 ACE-Step、Levo、Yue 等多个前沿 AIGC 音乐大模型，通过源码解读、Merlin 平台部署及 LoRA 训练实测，为组内音乐大模型基座选型提供了关键技术论证与实验数据支持。
+      - 高精度分类器开发： 从 0 到 1 开发并上线了基于深度学习的 Acapella Classifier 人声检测小模型，通过高效数据清洗与 Euler 框架部署，实现 95% 以上的检测精度与 CPU 秒级推理，有效节省了 GPU 资源消耗。
+      - 架构重构与逻辑统一： 主导了汽水热度计算逻辑的架构重构，将散落在 storm_api 与开平中的冗余代码抽象为统一函数，解决了多端数据不一致的历史遗留问题，大幅提升了后续业务逻辑的维护效率。
+      - 核心审核链路搭建： 负责 AI 审核流程中 AED、静音检测、截断感识别等 4 个核心 ByteFlow 节点的开发与异步调度系统接入，在高召回（95%）的基础上保障了 AI 歌曲入口开放后的内容底线安全与大规模审核容量。
+      - 复杂业务需求攻坚： 独立完成 Luna 格式化歌词上传等 RPC 接口开发，通过优化 Metrics 打点设计与主从延迟解决方案，修复了用户修改歌词后的同步入库缺陷，确保了 Luna 动态歌词在曲库与汽水端的平稳落地。
   - position: NXP恩智浦半导体 | 嵌入式系统工程师
-    company_name: 
+    company_name: MPU - 上海浦东
     company_url: ''
     company_logo: ''
     date_start: 2023-04-01
     date_end: 2023-08-31
     summary: |
       Responsibilities include:
-      - Migrated infrastructure to a new data center
-      - lorem ipsum dolor sit amet, consectetur adipiscing elit
-      - lorem ipsum dolor sit amet, consectetur adipiscing elit
+      - 参与基于MobileNet在i.mx 93 SoC上AI驾驶危险动作识别Demo的模型训练与量化工作。实现准确率85\%、每秒20帧推理速度的端侧部署[https://github.com/nxp-imx-support/nxp-demo-experience-demos-list](https://github.com/nxp-imx-support/nxp-demo-experience-demos-list)
+      - 独立负责OrangeBox SoC的WebGUI开发。基于嵌入式前后端交互实现蓝牙、wifi连接等板载信息交互功能。成果获公司年终表彰[https://github.com/nxp-imx/web_server](https://github.com/nxp-imx/web_server)
+
 
 # Skills
 # Add your own SVG icons to `assets/media/icons/`
 skills:
   - name: Technical Skills
     items:
-      - name: Python
-        description: ''
+      - name: 电子相关
+        description: '熟练掌握'
         percent: 80
         icon: code-bracket
-      - name: Data Science
-        description: ''
+      - name: 计算机相关
+        description: '熟练运用C、C++、python、数据库、Golang等编程语言'
         percent: 100
         icon: chart-bar
-      - name: SQL
+      - name: 定位导航相关
+        description: ''
+        percent: 40
+        icon: circle-stack
+      - name: 光学相关
+        description: ''
+        percent: 40
+        icon: circle-stack
+      - name: 机械相关
         description: ''
         percent: 40
         icon: circle-stack
@@ -137,42 +157,42 @@ skills:
 
 languages:
   - name: English
-    percent: 100
-  - name: Chinese
     percent: 75
-  - name: Portuguese
-    percent: 25
+  - name: Chinese
+    percent: 100
+  # - name: Portuguese
+  #   percent: 25
 
 # Awards.
 #   Add/remove as many awards below as you like.
 #   Only `title`, `awarder`, and `date` are required.
 #   Begin multi-line `summary` with YAML's `|` or `|2-` multi-line prefix and indent 2 spaces below.
 awards:
-  - title: Neural Networks and Deep Learning
-    url: https://www.coursera.org/learn/neural-networks-deep-learning
-    date: '2023-11-25'
-    awarder: Coursera
-    icon: coursera
-    summary: |
-      I studied the foundational concept of neural networks and deep learning. By the end, I was familiar with the significant technological trends driving the rise of deep learning; build, train, and apply fully connected deep neural networks; implement efficient (vectorized) neural networks; identify key parameters in a neural network’s architecture; and apply deep learning to your own applications.
-  - title: Blockchain Fundamentals
-    url: https://www.edx.org/professional-certificate/uc-berkeleyx-blockchain-fundamentals
-    date: '2023-07-01'
-    awarder: edX
-    icon: edx
-    summary: |
-      Learned:
-      - Synthesize your own blockchain solutions
-      - Gain an in-depth understanding of the specific mechanics of Bitcoin
-      - Understand Bitcoin’s real-life applications and learn how to attack and destroy Bitcoin, Ethereum, smart contracts and Dapps, and alternatives to Bitcoin’s Proof-of-Work consensus algorithm
-  - title: 'Object-Oriented Programming in R'
-    url: https://www.datacamp.com/courses/object-oriented-programming-with-s3-and-r6-in-r
-    certificate_url: https://www.datacamp.com
-    date: '2023-01-21'
-    awarder: datacamp
-    icon: datacamp
-    summary: |
-      Object-oriented programming (OOP) lets you specify relationships between functions and the objects that they can act on, helping you manage complexity in your code. This is an intermediate level course, providing an introduction to OOP, using the S3 and R6 systems. S3 is a great day-to-day R programming tool that simplifies some of the functions that you write. R6 is especially useful for industry-specific analyses, working with web APIs, and building GUIs.
+  # - title: Neural Networks and Deep Learning
+  #   url: https://www.coursera.org/learn/neural-networks-deep-learning
+  #   date: '2023-11-25'
+  #   awarder: Coursera
+  #   icon: coursera
+  #   summary: |
+  #     I studied the foundational concept of neural networks and deep learning. By the end, I was familiar with the significant technological trends driving the rise of deep learning; build, train, and apply fully connected deep neural networks; implement efficient (vectorized) neural networks; identify key parameters in a neural network’s architecture; and apply deep learning to your own applications.
+  # - title: Blockchain Fundamentals
+  #   url: https://www.edx.org/professional-certificate/uc-berkeleyx-blockchain-fundamentals
+  #   date: '2023-07-01'
+  #   awarder: edX
+  #   icon: edx
+  #   summary: |
+  #     Learned:
+  #     - Synthesize your own blockchain solutions
+  #     - Gain an in-depth understanding of the specific mechanics of Bitcoin
+  #     - Understand Bitcoin’s real-life applications and learn how to attack and destroy Bitcoin, Ethereum, smart contracts and Dapps, and alternatives to Bitcoin’s Proof-of-Work consensus algorithm
+  # - title: 'Object-Oriented Programming in R'
+  #   url: https://www.datacamp.com/courses/object-oriented-programming-with-s3-and-r6-in-r
+  #   certificate_url: https://www.datacamp.com
+  #   date: '2023-01-21'
+  #   awarder: datacamp
+  #   icon: datacamp
+  #   summary: |
+  #     Object-oriented programming (OOP) lets you specify relationships between functions and the objects that they can act on, helping you manage complexity in your code. This is an intermediate level course, providing an introduction to OOP, using the S3 and R6 systems. S3 is a great day-to-day R programming tool that simplifies some of the functions that you write. R6 is especially useful for industry-specific analyses, working with web APIs, and building GUIs.
 ---
 
 ## About Me
