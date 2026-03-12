@@ -1,6 +1,9 @@
 ---
 title: 传感器实践报告
 date: 2023-10-26
+image:
+  filename: featured.png
+  focal_point: Smart
 links:
   - type: site
 tags:

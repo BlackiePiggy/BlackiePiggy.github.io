@@ -1,6 +1,9 @@
 ---
 title: 机械手爪部位触觉感应系统
 date: 2023-10-26
+image:
+  filename: featured.png
+  focal_point: Smart
 links:
   - type: site
 tags:
