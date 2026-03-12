@@ -5,6 +5,8 @@ links:
   - type: site
 tags:
   - Technique
+featured: true
+draft: false
 ---
 
 <!--more-->
