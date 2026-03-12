@@ -88,3 +88,22 @@ HUGO_VERSION = "0.157.0"
 然后重新部署。
 
 ✔成功解决问题
+
+## Github解决方案
+修改deploy.yml中的
+```
+env:
+  WC_HUGO_VERSION: '0.148.2'
+  NODE_VERSION: '20'
+```
+
+为
+
+```
+env:
+  WC_HUGO_VERSION: '0.157.0'
+  NODE_VERSION: '20'
+```
+然后重新部署。
+
+✔成功解决问题
