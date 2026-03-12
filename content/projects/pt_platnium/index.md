@@ -1,6 +1,9 @@
 ---
 title: Pt-100铂电阻温度检测系统
 date: 2023-10-26
+image:
+  filename: featured.png
+  focal_point: Smart
 links:
   - type: site
 tags:

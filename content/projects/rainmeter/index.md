@@ -1,6 +1,9 @@
 ---
 title: Rainmeter Daft Punk主题 + WebNowPlaying的网易云音乐Netease Music Web端适配
 date: 2026-02-28
+image:
+  filename: featured.png
+  focal_point: Smart
 links:
   - type: site
 tags:
