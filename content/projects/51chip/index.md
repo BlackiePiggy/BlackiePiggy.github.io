@@ -1,6 +1,9 @@
 ---
 title: 微机原理51单片机综合实验
 date: 2023-10-26
+image:
+  filename: featured.png
+  focal_point: Smart
 links:
   - type: site
 tags:

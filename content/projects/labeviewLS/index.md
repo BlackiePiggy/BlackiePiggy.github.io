@@ -1,6 +1,9 @@
 ---
 title: 测试数据处理与误差分析--最小二乘和回归分析的LabVIEW实现
 date: 2023-10-26
+image:
+  filename: featured.png
+  focal_point: Smart
 links:
   - type: site
 tags:

@@ -1,6 +1,9 @@
 ---
 title: 自动控制原理Matlab仿真
 date: 2023-10-26
+image:
+  filename: featured.png
+  focal_point: Smart
 links:
   - type: site
 tags:
