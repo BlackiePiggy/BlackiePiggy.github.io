@@ -1,7 +1,7 @@
 hugoblox:
   schema: "2.0"
   identity:
-    name: jason blog
+    name: ""
     type: person
     tagline: ""
     description: ""
