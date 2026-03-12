@@ -1,7 +1,7 @@
 name: Deploy website to GitHub Pages
 
 env:
-  WC_HUGO_VERSION: '0.148.2'
+  WC_HUGO_VERSION: '0.157.0'
   NODE_VERSION: '20'
 
 on:
