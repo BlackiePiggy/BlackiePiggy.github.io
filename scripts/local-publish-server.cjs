@@ -45,6 +45,38 @@ function sendText(res, status, body, contentType = "text/plain; charset=utf-8") 
   res.end(body);
 }
 
+function mediaToolMissingPage() {
+  const escapedDir = MEDIA_TOOL_DIR
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Media Upload Tool Missing</title>
+  <style>
+    body{margin:0;padding:32px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f6f8fb;color:#16202a}
+    .card{max-width:760px;margin:0 auto;background:#fff;border:1px solid #d9e1ea;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.05)}
+    h1{margin-top:0}
+    code{background:#f1f4f8;padding:2px 6px;border-radius:6px}
+    pre{white-space:pre-wrap;background:#0f1720;color:#e6edf3;padding:14px;border-radius:12px;overflow:auto}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Media Upload 工具前端资源缺失</h1>
+    <p>当前本地 Publisher API 已启动，但内嵌工具依赖的静态文件目录不存在，所以 <code>/media-upload-tool/</code> 无法正常加载。</p>
+    <p>期望目录：</p>
+    <pre>${escapedDir}</pre>
+    <p>这通常说明另一台机器上保留过未提交的 <code>markdown_media_upload/public</code> 文件，而当前工作区里没有这部分资源。</p>
+  </div>
+</body>
+</html>`;
+}
+
 function sanitizeSlug(slug) {
   return String(slug || "")
     .toLowerCase()
@@ -391,6 +423,10 @@ async function handleMediaToolApi(req, res, pathname, body) {
 
 function serveMediaToolStatic(req, res, pathname) {
   if (!pathname.startsWith("/media-upload-tool")) return false;
+  if (!fs.existsSync(MEDIA_TOOL_DIR) || !fs.statSync(MEDIA_TOOL_DIR).isDirectory()) {
+    sendText(res, 503, mediaToolMissingPage(), MIME_TYPES[".html"]);
+    return true;
+  }
   const suffix = pathname.replace(/^\/media-upload-tool/, "") || "/";
   const relPath = suffix === "/" ? "index.html" : suffix.replace(/^\/+/, "");
   const filePath = path.join(MEDIA_TOOL_DIR, relPath);
@@ -636,4 +672,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   console.log(`Local publish API running at http://127.0.0.1:${PORT}/publish`);
   console.log(`Password: ${PASSWORD}`);
+  if (!fs.existsSync(MEDIA_TOOL_DIR) || !fs.statSync(MEDIA_TOOL_DIR).isDirectory()) {
+    console.warn(`Media upload tool assets are missing: ${MEDIA_TOOL_DIR}`);
+  }
 });

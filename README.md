@@ -210,6 +210,7 @@ npm run cms:generate
 ```bash
 chmod +x scripts/start-hugo.sh
 chmod +x scripts/start-publisher-api.sh
+chmod +x scripts/start-local.command
 ```
 
 然后分别运行：
@@ -218,6 +219,18 @@ chmod +x scripts/start-publisher-api.sh
 ./scripts/start-hugo.sh
 ./scripts/start-publisher-api.sh
 ```
+
+这两个脚本会自动：
+
+- 新开一个 Terminal 窗口运行服务
+- 保留服务日志窗口
+- 自动打开对应的本地页面
+
+如果你想像 Windows 一样在 Finder 里双击一个脚本直接启动两项服务，可以使用：
+
+- `scripts/start-local.command`
+
+首次运行如果被系统拦截，可以在 Finder 中右键该文件后选择“打开”一次，之后就可以继续双击运行。
 
 ### 默认地址
 
