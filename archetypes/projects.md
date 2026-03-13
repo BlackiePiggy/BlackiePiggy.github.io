@@ -1,5 +1,5 @@
 ---
-title: BLABLABLA
+title:
 date: 2026-03-12T12:46:18+08:00
 image:
   filename: featured.png

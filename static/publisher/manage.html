@@ -16,7 +16,7 @@
     .top,.toolbar{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
     .top{margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
     .top h1{margin:0}.chip{background:var(--chip);color:#0f5a42;padding:4px 10px;border-radius:999px;font-size:12px}
-    .toolbar{display:grid;grid-template-columns:2fr 1fr 1fr auto auto;gap:10px;align-items:end}
+    .toolbar{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto auto;gap:10px;align-items:end}
     .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
     input,select,button{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;font-size:14px}
     .btn{border:none;background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff;cursor:pointer}
@@ -33,6 +33,12 @@
     .mask.open{display:flex}
     .modal{width:min(460px,100%);background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}
     .modal h3{margin:0 0 8px}.modal p{margin:0 0 14px;color:#44535f;font-size:14px}.m-actions{display:flex;justify-content:flex-end;gap:8px}
+    .toast-stack{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:9999;pointer-events:none}
+    .toast{min-width:220px;max-width:360px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--text);box-shadow:0 12px 30px rgba(21,32,43,.12);opacity:0;transform:translateY(8px);animation:toast-in .18s ease forwards}
+    .toast.ok{border-color:#b7e4d7;background:#effaf5;color:#065f46}.toast.err{border-color:#efb6b6;background:#fff5f5;color:#b91c1c}
+    .toast.fade-out{animation:toast-out .22s ease forwards}
+    @keyframes toast-in{to{opacity:1;transform:translateY(0)}}
+    @keyframes toast-out{to{opacity:0;transform:translateY(8px)}}
     @media (max-width:1100px){.toolbar{grid-template-columns:1fr 1fr 1fr 1fr}.cards.multi{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media (max-width:980px){.layout{grid-template-columns:1fr}.side{position:relative;height:auto}.toolbar{grid-template-columns:1fr}.cards.multi{grid-template-columns:1fr}}
   </style>
@@ -55,6 +61,8 @@
       <div class="field"><label>API 地址</label><input id="apiBase" /></div>
       <div class="field"><label>密码</label><input id="password" type="password" /></div>
       <div class="field"><label>分类</label><select id="template"></select></div>
+      <div class="field"><label>排序字段</label><select id="sortField"><option value="date">发布时间</option><option value="title">名称</option><option value="slug">Slug</option></select></div>
+      <div class="field"><label>排序方向</label><select id="sortOrder"><option value="desc">倒序</option><option value="asc">正序</option></select></div>
       <button id="layoutBtn" class="btn-ghost" type="button">切换到单列</button>
       <button id="refreshBtn" class="btn" type="button">刷新内容</button>
     </section>
@@ -76,44 +84,68 @@
 
 <script>
 const local=["localhost","127.0.0.1"].includes(location.hostname);
-apiBase.value=localStorage.getItem("publisher_api_base")||(local?"http://127.0.0.1:8790":"");
-password.value=localStorage.getItem("publisher_password")||(local?"123456":"");
+const apiBaseInput=document.getElementById("apiBase");
+const passwordInput=document.getElementById("password");
+const templateSelect=document.getElementById("template");
+const sortFieldSelect=document.getElementById("sortField");
+const sortOrderSelect=document.getElementById("sortOrder");
+const layoutBtnEl=document.getElementById("layoutBtn");
+const refreshBtnEl=document.getElementById("refreshBtn");
+const statusEl=document.getElementById("status");
+const cardsEl=document.getElementById("cards");
+const countBadgeEl=document.getElementById("countBadge");
+const confirmMaskEl=document.getElementById("confirmMask");
+const confirmTextEl=document.getElementById("confirmText");
+const cancelDeleteBtnEl=document.getElementById("cancelDeleteBtn");
+const confirmDeleteBtnEl=document.getElementById("confirmDeleteBtn");
+const toastStackEl=document.body.appendChild(document.createElement("div"));
+toastStackEl.className="toast-stack";
+apiBaseInput.value=localStorage.getItem("publisher_api_base")||(local?"http://127.0.0.1:8790":"");
+passwordInput.value=localStorage.getItem("publisher_password")||(local?"123456":"");
+sortFieldSelect.value=localStorage.getItem("publisher_manage_sort_field")||"date";
+sortOrderSelect.value=localStorage.getItem("publisher_manage_sort_order")||"desc";
 let templates=[],layout=localStorage.getItem("publisher_layout")||"multi",pendingDelete=null;
-const st=(m,e=false)=>{status.style.color=e?"#b91c1c":"#155e75";status.textContent=m||""};
-const base=()=>apiBase.value.replace(/\/+$/,"");
+function showToast(message,isError=false){if(!message)return;const toast=document.createElement("div");toast.className=`toast ${isError?"err":"ok"}`;toast.textContent=message;toastStackEl.appendChild(toast);setTimeout(()=>{toast.classList.add("fade-out");setTimeout(()=>toast.remove(),220);},1800);}
+const st=(m,e=false,notify=false)=>{statusEl.style.color=e?"#b91c1c":"#155e75";statusEl.textContent=m||"";if(notify)showToast(String(m).split("\n")[0],e)};
+const base=()=>apiBaseInput.value.replace(/\/+$/,"");
 const esc=s=>String(s||"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
-function applyLayout(){cards.className=`cards ${layout}`;layoutBtn.textContent=layout==="multi"?"切换到单列":"切换到多列";}
+function applyLayout(){cardsEl.className=`cards ${layout}`;layoutBtnEl.textContent=layout==="multi"?"切换到单列":"切换到多列";}
 function openDeleteModal(){
-  confirmMask.classList.add("open");
+  confirmMaskEl.classList.add("open");
 }
 function closeDeleteModal(){
-  confirmMask.classList.remove("open");
+  confirmMaskEl.classList.remove("open");
 }
-async function loadTemplates(){const r=await fetch("/publisher/templates.json");const j=await r.json();templates=j.templates||[];template.innerHTML="";templates.forEach(t=>{const o=document.createElement("option");o.value=t.name;o.textContent=t.name;template.appendChild(o);});}
+async function loadTemplates(){const r=await fetch("/publisher/templates.json");const j=await r.json();templates=j.templates||[];const current=templateSelect.value;templateSelect.innerHTML="";templates.forEach(t=>{const o=document.createElement("option");o.value=t.name;o.textContent=t.name;templateSelect.appendChild(o);});if(current&&templates.some(t=>t.name===current))templateSelect.value=current;}
 function cardHtml(t,it){const image=it.imageUrl?`<img src="${esc(it.imageUrl)}" alt="">`:`无封面图（可在编辑页上传 featured 图）`;return `<article class="card"><div class="cover">${image}</div><div class="body"><span class="chip">${esc(t)}</span><h3 class="title">${esc(it.title||it.slug)}</h3><div class="meta">${esc(it.date||"未设置日期")} · slug: ${esc(it.slug)}</div><div class="summary">${esc(it.summary||"无摘要")}</div><div class="actions"><button class="edit" data-template="${esc(t)}" data-slug="${esc(it.slug)}">编辑文章</button><button class="del del-btn" data-template="${esc(t)}" data-slug="${esc(it.slug)}" data-title="${esc(it.title||it.slug)}">删除帖子</button></div></div></article>`;}
-async function loadList(){localStorage.setItem("publisher_api_base",base());localStorage.setItem("publisher_password",password.value);const t=template.value;if(!t)return;const r=await fetch(`${base()}/content?template=${encodeURIComponent(t)}`);const j=await r.json();if(!r.ok)throw new Error(j.error||"加载失败");const items=j.items||[];countBadge.textContent=`${items.length} 篇`;cards.innerHTML=items.length?items.map(it=>cardHtml(t,it)).join(""):`<div class="empty">这个分类下还没有内容。</div>`;document.querySelectorAll(".edit").forEach(b=>b.onclick=()=>location.href=`/publisher/edit.html?template=${encodeURIComponent(b.dataset.template)}&slug=${encodeURIComponent(b.dataset.slug)}`);document.querySelectorAll(".del-btn").forEach(b=>b.onclick=()=>{pendingDelete={template:b.dataset.template,slug:b.dataset.slug,title:b.dataset.title};confirmText.textContent=`将删除《${pendingDelete.title}》(${pendingDelete.slug})。此操作不可撤销。`;openDeleteModal();});st(items.length?`已加载 ${items.length} 篇内容`:"暂无内容");}
-async function doDelete(){if(!pendingDelete)return;const r=await fetch(`${base()}/delete`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:password.value,template:pendingDelete.template,slug:pendingDelete.slug})});const j=await r.json();if(!r.ok)throw new Error(j.error||"删除失败");await loadList();st(`已删除：${j.deletedPath}`);}
-layoutBtn.onclick=()=>{layout=layout==="multi"?"single":"multi";localStorage.setItem("publisher_layout",layout);applyLayout();};
-refreshBtn.onclick=()=>loadList().catch(e=>st(e.message,true));template.onchange=()=>loadList().catch(e=>st(e.message,true));
-cancelDeleteBtn.onclick=()=>{closeDeleteModal();pendingDelete=null;};
-confirmDeleteBtn.onclick=async()=>{
+function sortedItems(items){const field=sortFieldSelect.value;const order=sortOrderSelect.value;const dir=order==="asc"?1:-1;return [...items].sort((a,b)=>{if(field==="date"){const av=String(a.date||"");const bv=String(b.date||"");return av.localeCompare(bv)*dir;}if(field==="slug"){return String(a.slug||"").localeCompare(String(b.slug||""),"zh-Hans-CN",{numeric:true,sensitivity:"base"})*dir;}return String(a.title||a.slug||"").localeCompare(String(b.title||b.slug||""),"zh-Hans-CN",{numeric:true,sensitivity:"base"})*dir;});}
+async function loadList(notify=false){localStorage.setItem("publisher_api_base",base());localStorage.setItem("publisher_password",passwordInput.value);localStorage.setItem("publisher_manage_sort_field",sortFieldSelect.value);localStorage.setItem("publisher_manage_sort_order",sortOrderSelect.value);const t=templateSelect.value;if(!t)return;const r=await fetch(`${base()}/content?template=${encodeURIComponent(t)}`);const j=await r.json();if(!r.ok)throw new Error(j.error||"加载失败");const items=sortedItems(j.items||[]);countBadgeEl.textContent=`${items.length} 篇`;cardsEl.innerHTML=items.length?items.map(it=>cardHtml(t,it)).join(""):`<div class="empty">这个分类下还没有内容。</div>`;document.querySelectorAll(".edit").forEach(b=>b.onclick=()=>{showToast(`正在打开文章：${b.dataset.slug}`);sessionStorage.setItem("publisher_edit_toast",JSON.stringify({message:`已打开文章：${b.dataset.slug}`}));location.href=`/publisher/edit.html?template=${encodeURIComponent(b.dataset.template)}&slug=${encodeURIComponent(b.dataset.slug)}`});document.querySelectorAll(".del-btn").forEach(b=>b.onclick=()=>{pendingDelete={template:b.dataset.template,slug:b.dataset.slug,title:b.dataset.title};confirmTextEl.textContent=`将删除《${pendingDelete.title}》(${pendingDelete.slug})。此操作不可撤销。`;openDeleteModal();showToast(`准备删除：${b.dataset.slug}`);});st(items.length?`已加载 ${items.length} 篇内容`:"暂无内容",false,notify);}
+async function doDelete(){if(!pendingDelete)return;const r=await fetch(`${base()}/delete`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:passwordInput.value,template:pendingDelete.template,slug:pendingDelete.slug})});const j=await r.json();if(!r.ok)throw new Error(j.error||"删除失败");await loadList();st(`已删除：${j.deletedPath}`);}
+layoutBtnEl.onclick=()=>{layout=layout==="multi"?"single":"multi";localStorage.setItem("publisher_layout",layout);applyLayout();showToast(layout==="multi"?"已切换到多列":"已切换到单列");};
+refreshBtnEl.onclick=()=>{st("正在刷新内容...",false,true);loadList(true).catch(e=>st(e.message,true,true));};
+templateSelect.onchange=()=>{st("正在切换分类...",false,true);loadList(true).catch(e=>st(e.message,true,true));};
+sortFieldSelect.onchange=()=>{st("正在按新排序方式刷新...",false,true);loadList(true).catch(e=>st(e.message,true,true));};
+sortOrderSelect.onchange=()=>{st("正在按新排序方式刷新...",false,true);loadList(true).catch(e=>st(e.message,true,true));};
+cancelDeleteBtnEl.onclick=()=>{closeDeleteModal();pendingDelete=null;};
+confirmDeleteBtnEl.onclick=async()=>{
   const snapshot = pendingDelete ? { ...pendingDelete } : null;
   closeDeleteModal();
   pendingDelete = null;
   if (!snapshot) return;
   pendingDelete = snapshot;
   try{
-    confirmDeleteBtn.disabled = true;
+    confirmDeleteBtnEl.disabled = true;
+    st(`正在删除：${snapshot.slug}...`,false,true);
     await doDelete();
   }catch(e){
-    st(e.message,true);
+    st(e.message,true,true);
   }finally{
-    confirmDeleteBtn.disabled = false;
+    confirmDeleteBtnEl.disabled = false;
     pendingDelete = null;
   }
 };
-confirmMask.onclick=(e)=>{if(e.target===confirmMask){closeDeleteModal();pendingDelete=null;}};
-(async()=>{applyLayout();await loadTemplates();await loadList();})().catch(e=>st(e.message,true));
+confirmMaskEl.onclick=(e)=>{if(e.target===confirmMaskEl){closeDeleteModal();pendingDelete=null;}};
+(async()=>{applyLayout();await loadTemplates();await loadList();})().catch(e=>st(e.message,true,true));
 </script>
 </body>
 </html>
