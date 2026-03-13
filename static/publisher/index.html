@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Self Publisher</title>
+    <style>
+      :root { --bg:#f3f4f6; --fg:#111827; --card:#fff; --bd:#d1d5db; --acc:#0f766e; --muted:#6b7280; }
+      * { box-sizing: border-box; }
+      body { margin:0; font-family:"Segoe UI",sans-serif; background:var(--bg); color:var(--fg); }
+      .wrap { max-width: 980px; margin: 24px auto; padding: 0 16px; }
+      .card { background:var(--card); border:1px solid var(--bd); border-radius:10px; padding:14px; margin-bottom:12px; }
+      .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+      .field { margin-bottom:10px; }
+      label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
+      input, select, textarea, button { width:100%; padding:10px; border:1px solid var(--bd); border-radius:8px; font-size:14px; }
+      textarea { min-height:140px; resize:vertical; }
+      .btn { background:var(--acc); color:#fff; border:none; cursor:pointer; }
+      .status { white-space:pre-wrap; font-size:13px; }
+      .obj, .list-item { border:1px dashed var(--bd); border-radius:8px; padding:8px; margin:8px 0; }
+      .muted { font-size:12px; color:var(--muted); }
+      .preview { max-width:220px; border:1px solid var(--bd); border-radius:8px; }
+      @media (max-width:760px) { .row { grid-template-columns:1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>自建发布页</h1>
+
+      <div class="card">
+        <div class="row">
+          <div class="field">
+            <label>Worker API 地址</label>
+            <input id="apiBase" placeholder="https://your-worker.workers.dev/publish" />
+          </div>
+          <div class="field">
+            <label>发布密码</label>
+            <input id="password" type="password" placeholder="PUBLISH_PASSWORD" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>模板</label>
+            <select id="template"></select>
+          </div>
+          <div class="field">
+            <label>Slug</label>
+            <input id="slug" placeholder="my-new-post" />
+          </div>
+        </div>
+        <p class="muted">模板由 `archetypes/*.md` 自动生成。</p>
+      </div>
+
+      <div class="card">
+        <div class="field">
+          <label>Featured 图（上传或 Ctrl+V 粘贴）</label>
+          <input id="featuredFile" type="file" accept="image/*" />
+        </div>
+        <img id="preview" class="preview" style="display:none" alt="featured preview" />
+      </div>
+
+      <div class="card"><div id="formRoot"></div></div>
+
+      <div class="card">
+        <button id="publishBtn" class="btn">一键发布</button>
+        <div id="status" class="status" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <script>
+      let templates = [];
+      let featuredData = null;
+
+      const defaultApi = localStorage.getItem("publisher_api") || "";
+      document.getElementById("apiBase").value = defaultApi;
+
+      function e(tag, attrs = {}, children = []) {
+        const el = document.createElement(tag);
+        Object.entries(attrs).forEach(([k, v]) => {
+          if (k === "class") el.className = v;
+          else if (k === "text") el.textContent = v;
+          else el.setAttribute(k, v);
+        });
+        children.forEach((c) => el.appendChild(c));
+        return el;
+      }
+
+      function status(msg, err = false) {
+        const box = document.getElementById("status");
+        box.style.color = err ? "#b91c1c" : "#065f46";
+        box.textContent = msg;
+      }
+
+      function slugify(s) {
+        return String(s || "").toLowerCase().trim().replace(/[\s_]+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      }
+
+      function setByPath(target, path, value) {
+        const parts = path.replace(/\[(\d+)\]/g, ".$1").split(".");
+        let cur = target;
+        for (let i = 0; i < parts.length; i++) {
+          const p = parts[i];
+          const last = i === parts.length - 1;
+          if (last) cur[p] = value;
+          else {
+            if (cur[p] === undefined) cur[p] = /^\d+$/.test(parts[i + 1]) ? [] : {};
+            cur = cur[p];
+          }
+        }
+      }
+
+      function renderPrimitive(field, path) {
+        const box = e("div", { class: "field" });
+        box.appendChild(e("label", { text: field.name }));
+        const type = field.type === "datetime" ? "datetime-local" : (field.type === "number" ? "number" : (field.type === "boolean" ? "checkbox" : "text"));
+        const input = e("input", { type, "data-path": path });
+        if (field.default !== null && field.default !== undefined) {
+          if (field.type === "boolean") input.checked = !!field.default;
+          else if (field.type === "datetime") input.value = String(field.default).slice(0, 16);
+          else input.value = field.default;
+        }
+        box.appendChild(input);
+        return box;
+      }
+
+      function renderObject(field, path) {
+        const box = e("div", { class: "obj" });
+        box.appendChild(e("label", { text: field.name }));
+        (field.fields || []).forEach((f) => box.appendChild(renderField(f, `${path}.${f.name}`)));
+        return box;
+      }
+
+      function renderList(field, path) {
+        const box = e("div", { class: "field" });
+        box.appendChild(e("label", { text: field.name }));
+        const root = e("div");
+        const add = e("button", { type: "button", text: "添加一项" });
+        add.onclick = () => {
+          const idx = root.children.length;
+          const item = e("div", { class: "list-item" });
+          if (field.itemType === "object") {
+            (field.fields || []).forEach((f) => item.appendChild(renderField(f, `${path}[${idx}].${f.name}`)));
+          } else {
+            item.appendChild(renderPrimitive({ name: "item", type: field.itemType || "string", default: "" }, `${path}[${idx}]`));
+          }
+          const rm = e("button", { type: "button", text: "删除" });
+          rm.onclick = () => item.remove();
+          item.appendChild(rm);
+          root.appendChild(item);
+        };
+        box.appendChild(root);
+        box.appendChild(add);
+        return box;
+      }
+
+      function renderField(field, path) {
+        if (field.type === "object") return renderObject(field, path);
+        if (field.type === "list") return renderList(field, path);
+        return renderPrimitive(field, path);
+      }
+
+      function collectValues() {
+        const out = {};
+        document.querySelectorAll("[data-path]").forEach((el) => {
+          const path = el.getAttribute("data-path");
+          let value;
+          if (el.type === "checkbox") value = el.checked;
+          else if (el.type === "number") value = el.value === "" ? null : Number(el.value);
+          else value = el.value;
+          if (value !== "" && value !== null) setByPath(out, path, value);
+        });
+        return out;
+      }
+
+      function renderTemplate(name) {
+        const tpl = templates.find((t) => t.name === name);
+        const root = document.getElementById("formRoot");
+        root.innerHTML = "";
+        if (!tpl) return;
+        tpl.fields.forEach((f) => root.appendChild(renderField(f, f.name)));
+        if (!root.querySelector("[data-path='body']")) {
+          root.appendChild(e("div", { class: "field" }, [e("label", { text: "body" }), e("textarea", { "data-path": "body", placeholder: "正文 Markdown" })]));
+        }
+      }
+
+      function readImage(file) {
+        if (!file) return;
+        const rd = new FileReader();
+        rd.onload = () => {
+          const res = rd.result;
+          const idx = res.indexOf(",");
+          featuredData = { name: file.name || "featured.png", mimeType: file.type || "image/png", base64: res.slice(idx + 1) };
+          const img = document.getElementById("preview");
+          img.src = res;
+          img.style.display = "block";
+        };
+        rd.readAsDataURL(file);
+      }
+
+      document.getElementById("featuredFile").addEventListener("change", (e2) => readImage(e2.target.files && e2.target.files[0]));
+      document.addEventListener("paste", (ev) => {
+        for (const item of ev.clipboardData.items) {
+          if (item.type && item.type.startsWith("image/")) {
+            readImage(item.getAsFile());
+            status("已读取剪贴板图片。");
+            break;
+          }
+        }
+      });
+
+      document.getElementById("publishBtn").onclick = async () => {
+        const btn = document.getElementById("publishBtn");
+        btn.disabled = true;
+        try {
+          const api = document.getElementById("apiBase").value.trim();
+          if (!api) throw new Error("请先填写 Worker API 地址");
+          localStorage.setItem("publisher_api", api);
+
+          const template = document.getElementById("template").value;
+          const password = document.getElementById("password").value;
+          const data = collectValues();
+          let slug = slugify(document.getElementById("slug").value);
+          if (!slug) {
+            slug = slugify(data.title || "new-post");
+            document.getElementById("slug").value = slug;
+          }
+
+          const resp = await fetch(api, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ template, slug, password, frontmatter: data, featured: featuredData }),
+          });
+          const out = await resp.json();
+          if (!resp.ok) throw new Error(out.error || "发布失败");
+          status(`发布成功\n${out.markdownPath}${out.featuredPath ? `\n${out.featuredPath}` : ""}`);
+        } catch (err) {
+          status(err.message || String(err), true);
+        } finally {
+          btn.disabled = false;
+        }
+      };
+
+      async function init() {
+        const r = await fetch("/publisher/templates.json");
+        const j = await r.json();
+        templates = j.templates || [];
+        const sel = document.getElementById("template");
+        templates.forEach((t) => sel.appendChild(e("option", { value: t.name, text: t.name })));
+        sel.onchange = () => renderTemplate(sel.value);
+        if (templates[0]) renderTemplate(templates[0].name);
+      }
+
+      init().catch((err) => status(`初始化失败: ${err.message}`, true));
+    </script>
+  </body>
+</html>

@@ -1,0 +1,428 @@
+{
+  "generatedAt": "2026-03-13T00:47:34.301Z",
+  "templates": [
+    {
+      "name": "event",
+      "fields": [
+        {
+          "name": "title",
+          "type": "string",
+          "default": null
+        },
+        {
+          "name": "event",
+          "type": "string",
+          "default": null
+        },
+        {
+          "name": "event_url",
+          "type": "string",
+          "default": null
+        },
+        {
+          "name": "location",
+          "type": "string",
+          "default": null
+        },
+        {
+          "name": "address",
+          "type": "object",
+          "default": {
+            "street": null,
+            "city": null,
+            "region": null,
+            "postcode": null,
+            "country": null
+          },
+          "fields": [
+            {
+              "name": "street",
+              "type": "string",
+              "default": null
+            },
+            {
+              "name": "city",
+              "type": "string",
+              "default": null
+            },
+            {
+              "name": "region",
+              "type": "string",
+              "default": null
+            },
+            {
+              "name": "postcode",
+              "type": "string",
+              "default": null
+            },
+            {
+              "name": "country",
+              "type": "string",
+              "default": null
+            }
+          ]
+        },
+        {
+          "name": "summary",
+          "type": "string",
+          "default": null
+        },
+        {
+          "name": "abstract",
+          "type": "string",
+          "default": null
+        },
+        {
+          "name": "date",
+          "type": "datetime",
+          "default": "2030-06-01T13:00:00Z"
+        },
+        {
+          "name": "date_end",
+          "type": "datetime",
+          "default": "2030-06-01T15:00:00Z"
+        },
+        {
+          "name": "all_day",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "publishDate",
+          "type": "datetime",
+          "default": "2017-01-01T00:00:00Z"
+        },
+        {
+          "name": "authors",
+          "type": "list",
+          "default": [
+            "admin"
+          ],
+          "itemType": "string"
+        },
+        {
+          "name": "tags",
+          "type": "list",
+          "default": [],
+          "itemType": "string"
+        },
+        {
+          "name": "featured",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "image",
+          "type": "object",
+          "default": {
+            "caption": "Image credit: [**Unsplash**](https://unsplash.com/photos/bzdhc5b3Bxs)",
+            "focal_point": "Right"
+          },
+          "fields": [
+            {
+              "name": "caption",
+              "type": "string",
+              "default": "Image credit: [**Unsplash**](https://unsplash.com/photos/bzdhc5b3Bxs)"
+            },
+            {
+              "name": "focal_point",
+              "type": "string",
+              "default": "Right"
+            }
+          ]
+        },
+        {
+          "name": "links",
+          "type": "list",
+          "default": [
+            {
+              "type": "code",
+              "url": "https://github.com"
+            },
+            {
+              "type": "slides",
+              "url": "https://slideshare.net"
+            },
+            {
+              "type": "video",
+              "url": "https://youtube.com"
+            }
+          ],
+          "itemType": "object",
+          "fields": [
+            {
+              "name": "type",
+              "type": "string",
+              "default": "code"
+            },
+            {
+              "name": "url",
+              "type": "string",
+              "default": "https://github.com"
+            }
+          ]
+        },
+        {
+          "name": "slides",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "name": "projects",
+          "type": "list",
+          "default": [
+            "example"
+          ],
+          "itemType": "string"
+        }
+      ]
+    },
+    {
+      "name": "idea",
+      "fields": [
+        {
+          "name": "title",
+          "type": "string",
+          "default": "TEMPLATE_VALUE"
+        },
+        {
+          "name": "date",
+          "type": "datetime",
+          "default": "TEMPLATE_VALUE"
+        },
+        {
+          "name": "draft",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "name": "summary",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "name": "tags",
+          "type": "list",
+          "default": [
+            "Idea"
+          ],
+          "itemType": "string"
+        },
+        {
+          "name": "categories",
+          "type": "list",
+          "default": [],
+          "itemType": "string"
+        },
+        {
+          "name": "mood",
+          "type": "string",
+          "default": "Happy"
+        },
+        {
+          "name": "location",
+          "type": "string",
+          "default": "Office"
+        }
+      ]
+    },
+    {
+      "name": "projects",
+      "fields": [
+        {
+          "name": "title",
+          "type": "string",
+          "default": "BLABLABLA"
+        },
+        {
+          "name": "date",
+          "type": "datetime",
+          "default": "2026-03-12T04:46:18.000Z"
+        },
+        {
+          "name": "image",
+          "type": "object",
+          "default": {
+            "filename": "featured.png",
+            "focal_point": "Smart"
+          },
+          "fields": [
+            {
+              "name": "filename",
+              "type": "string",
+              "default": "featured.png"
+            },
+            {
+              "name": "focal_point",
+              "type": "string",
+              "default": "Smart"
+            }
+          ]
+        },
+        {
+          "name": "links",
+          "type": "list",
+          "default": [
+            {
+              "type": "site"
+            }
+          ],
+          "itemType": "object",
+          "fields": [
+            {
+              "name": "type",
+              "type": "string",
+              "default": "site"
+            }
+          ]
+        },
+        {
+          "name": "tags",
+          "type": "list",
+          "default": [
+            "Technique"
+          ],
+          "itemType": "string"
+        },
+        {
+          "name": "featured",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "name": "draft",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    {
+      "name": "publications",
+      "fields": [
+        {
+          "name": "title",
+          "type": "string",
+          "default": "TITLE"
+        },
+        {
+          "name": "authors",
+          "type": "list",
+          "default": [
+            "Author 1",
+            "Author 2"
+          ],
+          "itemType": "string"
+        },
+        {
+          "name": "author_notes",
+          "type": "string",
+          "default": null
+        },
+        {
+          "name": "date",
+          "type": "datetime",
+          "default": "2025-09-05T00:00:00Z"
+        },
+        {
+          "name": "publishDate",
+          "type": "datetime",
+          "default": "2025-09-05T00:00:00Z"
+        },
+        {
+          "name": "publication_types",
+          "type": "list",
+          "default": [
+            "article-journal"
+          ],
+          "itemType": "string"
+        },
+        {
+          "name": "publication",
+          "type": "string",
+          "default": "Geodesy & Geodynamics"
+        },
+        {
+          "name": "publication_short",
+          "type": "string",
+          "default": "Geog"
+        },
+        {
+          "name": "abstract",
+          "type": "string",
+          "default": null
+        },
+        {
+          "name": "summary",
+          "type": "string",
+          "default": null
+        },
+        {
+          "name": "tags",
+          "type": "list",
+          "default": [
+            "Differential code bias; Flex power; GNSS"
+          ],
+          "itemType": "string"
+        },
+        {
+          "name": "featured",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "name": "links",
+          "type": "list",
+          "default": [
+            {
+              "type": "pdf",
+              "url": "https://www.sciencedirect.com/science/article/pii/S1674984725000850"
+            },
+            {
+              "type": "doi",
+              "url": "http://dx.doi.org/10.1016/j.geog.2025.09.005"
+            }
+          ],
+          "itemType": "object",
+          "fields": [
+            {
+              "name": "type",
+              "type": "string",
+              "default": "pdf"
+            },
+            {
+              "name": "url",
+              "type": "string",
+              "default": "https://www.sciencedirect.com/science/article/pii/S1674984725000850"
+            }
+          ]
+        },
+        {
+          "name": "image",
+          "type": "object",
+          "default": {
+            "caption": "2025-li-impact-of-flex",
+            "focal_point": "",
+            "preview_only": false
+          },
+          "fields": [
+            {
+              "name": "caption",
+              "type": "string",
+              "default": "2025-li-impact-of-flex"
+            },
+            {
+              "name": "focal_point",
+              "type": "string",
+              "default": ""
+            },
+            {
+              "name": "preview_only",
+              "type": "boolean",
+              "default": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
