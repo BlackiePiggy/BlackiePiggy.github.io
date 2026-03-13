@@ -8,6 +8,8 @@
 
 # Generated site output
 public/
+!markdown_media_upload/public/
+!markdown_media_upload/public/**
 
 # Hugo resources (processed assets)
 resources/

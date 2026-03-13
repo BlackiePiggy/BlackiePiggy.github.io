@@ -1,0 +1,138 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>富文本 Media 替换上传 OSS</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body data-theme="cyber-light">
+  <div class="container">
+    <div class="topbar">
+      <h1>富文本 Media 自动上传 OSS</h1>
+      <div class="theme-switch">
+        <button id="themeLightBtn" class="pill-btn" type="button">赛博亮</button>
+        <button id="themeDarkBtn" class="pill-btn" type="button">赛博暗</button>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="grid">
+        <div>
+          <label>AccessKeyId</label>
+          <input id="accessKeyId" placeholder="填写阿里云 AccessKeyId" />
+        </div>
+        <div>
+          <label>AccessKeySecret</label>
+          <input id="accessKeySecret" type="password" placeholder="填写阿里云 AccessKeySecret" />
+        </div>
+        <div>
+          <label>Region</label>
+          <input id="region" placeholder="如 oss-cn-hangzhou" />
+        </div>
+        <div>
+          <label>Bucket</label>
+          <input id="bucket" placeholder="bucket 名称" />
+        </div>
+        <div>
+          <label>Endpoint (可选)</label>
+          <input id="endpoint" placeholder="如 https://oss-cn-hangzhou.aliyuncs.com" />
+        </div>
+        <div>
+          <label>HTTPS</label>
+          <select id="secure">
+            <option value="true">true</option>
+            <option value="false">false</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid" style="margin-top: 10px;">
+        <div>
+          <label>配置名称</label>
+          <input id="profileName" placeholder="例如：生产环境-杭州" />
+        </div>
+        <div>
+          <label>已保存配置</label>
+          <select id="profileList"></select>
+        </div>
+      </div>
+      <div class="row" style="margin-top: 10px">
+        <button id="saveProfile" class="secondary">保存配置</button>
+        <button id="loadProfile" class="secondary">载入配置</button>
+        <button id="deleteProfile" class="secondary">删除配置</button>
+        <button id="testConn">验证 OSS 连接</button>
+        <span id="connStatus"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="grid">
+        <div>
+          <label>上传目录策略</label>
+          <select id="folderMode">
+            <option value="time_flat">时间单层（media_YYYYMMDD_HHMMSS）</option>
+            <option value="time_nested">时间双层（media_YYYYMMDD/HHMMSS）</option>
+            <option value="custom">自定义目录</option>
+          </select>
+        </div>
+      </div>
+      <div id="customDirWrap" style="display:none;margin-top:10px;">
+        <label>自定义目录</label>
+        <input id="customDir" placeholder="如 project-a/2026-03" />
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row" style="justify-content: space-between;">
+        <strong>粘贴富文本（支持直接 Ctrl+V）</strong>
+        <div class="row">
+          <button id="pasteRawBtn" class="secondary">原样粘贴</button>
+          <button id="pasteRichBtn" class="secondary">富文本转 Markdown 粘贴</button>
+          <button id="scanMedia" class="secondary">扫描 media</button>
+          <button id="prevMedia" class="secondary">上一个</button>
+          <button id="nextMedia" class="secondary">下一个</button>
+          <span id="mediaStats">共发现 0 个 media</span>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:10px;">
+        <div>
+          <label>原始富文本</label>
+          <textarea id="pasteText" placeholder="粘贴 Markdown 或富文本原始文本"></textarea>
+        </div>
+        <div>
+          <label>媒体列表（不渲染）</label>
+          <div id="mediaList" class="progress-list"></div>
+          <div style="margin-top:10px;">
+            <label>媒体预览</label>
+            <div id="mediaPreview" class="preview-box"></div>
+            <div id="mediaPreviewMeta" class="preview-meta">未选中媒体</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row" style="justify-content: space-between;">
+        <button id="startReplace" class="warn">开始替换并上传</button>
+        <strong id="progressText">待执行</strong>
+      </div>
+      <div class="progress-list" id="progressList" style="margin-top:10px;"></div>
+    </section>
+
+    <section class="card">
+      <div class="row" style="justify-content: space-between; margin-bottom: 8px;">
+        <label style="margin:0;">替换后富文本原始文本（media 链接已替换为 OSS）</label>
+        <div class="row">
+          <button id="copyResult" class="secondary">复制结果</button>
+          <button id="useResultAsInput" class="secondary">回填到输入</button>
+          <button id="clearResult" class="secondary">清空结果</button>
+        </div>
+      </div>
+      <textarea id="resultText"></textarea>
+    </section>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
