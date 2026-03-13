@@ -1,115 +1,75 @@
-# Publisher for GitHub Pages + Cloudflare Worker
+# Publisher CMS 本地工作流
 
-这个方案把发布功能拆成两部分：
+这个项目当前只保留本地发布方案，不再提供线上 Worker 发布能力。
 
-- GitHub Pages：托管静态发布页 `/publisher/`
-- Cloudflare Worker：提供动态 API（写入 GitHub 仓库）
+## 当前架构
 
-## 目录
+- Hugo：负责站点页面生成
+- Publisher CMS：负责本地可视化新建、编辑、删除内容
+- Local Publisher API：负责把操作落到本地仓库文件
+
+核心入口：
 
 - 发布页前端：`static/publisher/index.html`
 - 模板生成：`scripts/generate-publisher-templates.cjs`
 - 模板数据：`static/publisher/templates.json`
-- Worker API：`worker-api/src/index.js`
-- Wrangler 配置：`worker-api/wrangler.toml`
+- 本地 API：`scripts/local-publish-server.cjs`
 
-## 功能
+## 本地使用
 
-- 自动读取 `archetypes/*.md` 生成动态字段
-- 上传/粘贴 featured 图
-- 一键发布到 `content/<template>/<slug>/...`
-- 用你自己的密码鉴权（`PUBLISH_PASSWORD`）
+先安装依赖并生成 CMS 模板：
 
-## 本地准备
-
-```powershell
+```bash
 npm install
 npm run cms:generate
-hugo server -D
 ```
 
-访问：
+然后分别启动：
+
+```bash
+./scripts/start-hugo.sh
+./scripts/start-publisher-api.sh
+```
+
+Windows 可双击：
+
+- `scripts/start-hugo.bat`
+- `scripts/start-publisher-api.bat`
+
+启动后访问：
 
 - `http://localhost:1313/publisher/`
 
-说明：本地 `hugo server` 只验证页面，不会执行 Worker。
+本地 API 默认：
 
-## 部署 Worker API
+- 地址：`http://127.0.0.1:8790`
+- 密码：`123456`
 
-1. 安装 Wrangler
+## 工作方式
 
-```powershell
-npm i -g wrangler
+Publisher CMS 的所有操作都直接作用于本地仓库：
+
+- 新建文章：写入 `content/<template>/<slug>/index.md`
+- 修改文章：覆盖原有内容文件
+- 删除文章：删除对应目录
+- Featured 图：写入文章目录
+- 模板管理：直接修改 `archetypes/*.md`
+
+Media Upload 也走本地 API，不依赖线上服务。
+
+## 实际发布到线上
+
+本地改完内容后，使用你自己的 Git 流程推送即可：
+
+```bash
+git status
+git add .
+git commit -m "feat: update site content"
+git push
 ```
 
-2. 登录 Cloudflare（按提示打开浏览器授权）
+## 说明
 
-```powershell
-wrangler login
-```
-
-3. 切到 Worker 目录并部署
-
-```powershell
-cd worker-api
-wrangler deploy
-```
-
-4. 配置 Worker secrets
-
-```powershell
-wrangler secret put PUBLISH_PASSWORD
-wrangler secret put GITHUB_TOKEN
-```
-
-5. 配置 Worker vars（非 secret）
-
-```powershell
-wrangler secret put GITHUB_REPO_OWNER
-wrangler secret put GITHUB_REPO_NAME
-wrangler secret put GITHUB_REPO_BRANCH
-wrangler secret put CORS_ORIGIN
-```
-
-建议：
-
-- `GITHUB_REPO_BRANCH` 填 `main`
-- `CORS_ORIGIN` 填你的 GitHub Pages 域名，例如 `https://blackiepiggy.github.io`
-
-部署完成后你会得到一个地址：
-
-- `https://<worker-name>.<subdomain>.workers.dev`
-
-实际发布 API 填这个：
-
-- `https://<worker-host>/`（根路径就可 POST）
-
-## 在发布页里使用
-
-打开 `https://<your-gh-pages>/publisher/` 后：
-
-1. `Worker API 地址` 填 Worker URL
-2. 输入发布密码
-3. 选择模板并填写内容
-4. 上传或粘贴 featured 图
-5. 点击一键发布
-
-## 发布成功后检查
-
-仓库会新增/更新：
-
-- `content/<template>/<slug>/index.md`
-- `content/<template>/<slug>/featured.<ext>`（如果上传了图）
-
-## 新增模板流程
-
-1. 在 `archetypes/` 新增模板文件
-2. 运行 `npm run cms:generate`
-3. 推送到 GitHub Pages
-4. 重新打开 `/publisher/` 即可看到新模板
-
-## 安全建议
-
-- 不要把 `GITHUB_TOKEN` 写入仓库文件
-- `PUBLISH_PASSWORD` 用强密码并定期轮换
-- `CORS_ORIGIN` 限制为你的站点域名，不要长期使用 `*`
+- 线上 Worker 目录 `worker-api/` 已移除
+- 当前推荐维护方式就是“本地编辑，本地写文件，手动推送”
+- Decap CMS 相关目录和生成脚本已经移除

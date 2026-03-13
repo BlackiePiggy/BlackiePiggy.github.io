@@ -7,7 +7,7 @@
     "scripts": {
         "dev": "hugo server --disableFastRender",
         "build": "hugo --minify",
-        "cms:generate": "node scripts/generate-decap-config.cjs && node scripts/generate-publisher-templates.cjs",
+        "cms:generate": "node scripts/generate-publisher-templates.cjs",
         "publisher:generate": "node scripts/generate-publisher-templates.cjs",
         "publisher:local-api": "node scripts/local-publish-server.cjs"
     },

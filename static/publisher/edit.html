@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CMS Dashboard - 编辑文章</title>
+  <title>BlackiePiggy CMS | 编辑文章</title>
+  <link rel="icon" type="image/svg+xml" href="/publisher/favicon.svg" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     :root{--bg:#eef2f7;--panel:#fff;--line:#d7dee7;--text:#15202b;--muted:#637282;--brand:#0f766e;--brand2:#1e9b86}
@@ -24,7 +25,7 @@
     .md-preview{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fbfdff;min-height:160px;overflow:auto}
     .md-preview img{display:block;width:80%;max-width:80%;height:auto;margin:10px auto}
     .preview{max-width:220px;border:1px solid var(--line);border-radius:10px;display:none}.status{white-space:pre-wrap;font-size:13px}
-    .toast-stack{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:9999;pointer-events:none}
+    .toast-stack{position:fixed;right:18px;top:18px;display:flex;flex-direction:column;gap:10px;z-index:9999;pointer-events:none}
     .toast{min-width:220px;max-width:360px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--text);box-shadow:0 12px 30px rgba(21,32,43,.12);opacity:0;transform:translateY(8px);animation:toast-in .18s ease forwards}
     .toast.ok{border-color:#b7e4d7;background:#effaf5;color:#065f46}.toast.err{border-color:#efb6b6;background:#fff5f5;color:#b91c1c}
     .toast.fade-out{animation:toast-out .22s ease forwards}
@@ -113,6 +114,7 @@ function renderMarkdown(md){if(window.marked&&window.marked.parse)return window.
 function bindBodyPreview(){document.querySelectorAll("textarea[data-md='1']").forEach((ta)=>{const path=ta.dataset.path;const pv=document.querySelector(`[data-preview-for="${path}"]`);if(!pv)return;const update=()=>pv.innerHTML=renderMarkdown(ta.value);ta.addEventListener("input",update);update();});}
 function renderForm(values){const t=templates.find(x=>x.name===tpl);if(!t)throw new Error(`模板不存在: ${tpl}`);formRootEl.innerHTML="";let fs=t.fields.map(f=>withDefaults(f,values,f.name));if(!fs.some(x=>x.name==="body"))fs.push({name:"body",type:"string",default:values.body||""});fs.forEach(f=>formRootEl.appendChild(renderField(f,f.name)));bindBodyPreview();}
 featuredFileInput.onchange=(ev)=>{const f=ev.target.files&&ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const rs=r.result;featuredData={name:f.name,mimeType:f.type||"image/png",base64:rs.slice(rs.indexOf(",")+1)};previewImg.src=rs;previewImg.style.display="block";showToast("已选择新的 Featured 图")};r.readAsDataURL(f)};
+document.addEventListener("paste",(ev)=>{for(const i of ev.clipboardData.items){if(i.type.startsWith("image/")){const f=i.getAsFile();const r=new FileReader();r.onload=()=>{const rs=r.result;featuredData={name:f.name||"featured.png",mimeType:f.type||"image/png",base64:rs.slice(rs.indexOf(",")+1)};previewImg.src=rs;previewImg.style.display="block";showToast("已粘贴新的 Featured 图")};r.readAsDataURL(f);break}}});
 submitBtnEl.onclick=async()=>{try{st("正在更新...",false,true);submitBtnEl.disabled=true;localStorage.setItem("publisher_api_base",base());localStorage.setItem("publisher_password",passwordInput.value);const data=collect();const r=await fetch(`${base()}/update`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:tpl,slug:sg,password:passwordInput.value,frontmatter:data,featured:featuredData})});const j=await r.json();if(!r.ok)throw new Error(j.error||"更新失败");st(`更新成功\n${j.markdownPath}`,false,true);}catch(err){st(err.message,true,true)}finally{submitBtnEl.disabled=false}};
 (async()=>{if(!tpl||!sg)throw new Error("缺少 template/slug 参数");const [tr,ir]=await Promise.all([fetch("/publisher/templates.json"),fetch(`${base()}/content/item?template=${encodeURIComponent(tpl)}&slug=${encodeURIComponent(sg)}`)]);const tj=await tr.json();templates=tj.templates||[];const ij=await ir.json();if(!ir.ok)throw new Error(ij.error||"读取文章失败");renderForm({...ij.item.frontmatter,body:ij.item.body||""});showToast(`已打开文章：${sg}`);})().catch(err=>st(err.message,true,true));
 </script>

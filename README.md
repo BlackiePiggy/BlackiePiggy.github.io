@@ -120,7 +120,6 @@ content/                    实际内容
 markdown_media_upload/      原始富文本上传工具源码（已整合进本地 API）
 scripts/                    构建脚本、启动脚本、本地 API
 static/publisher/           Publisher CMS 前端页面
-worker-api/                 Cloudflare Worker API（用于线上发布）
 ```
 
 重点文件：
@@ -179,7 +178,6 @@ npm run cms:generate
 
 该命令会生成：
 
-- `static/admin/config.yml`
 - `static/publisher/templates.json`
 
 ## 启动方式
@@ -210,7 +208,6 @@ npm run cms:generate
 ```bash
 chmod +x scripts/start-hugo.sh
 chmod +x scripts/start-publisher-api.sh
-chmod +x scripts/start-local.command
 ```
 
 然后分别运行：
@@ -225,12 +222,6 @@ chmod +x scripts/start-local.command
 - 新开一个 Terminal 窗口运行服务
 - 保留服务日志窗口
 - 自动打开对应的本地页面
-
-如果你想像 Windows 一样在 Finder 里双击一个脚本直接启动两项服务，可以使用：
-
-- `scripts/start-local.command`
-
-首次运行如果被系统拦截，可以在 Finder 中右键该文件后选择“打开”一次，之后就可以继续双击运行。
 
 ### 默认地址
 
@@ -377,19 +368,20 @@ npm run cms:generate
 
 新模板就会出现在发布页中。
 
-## 线上发布
+## 发布流程
 
-项目也保留了线上接口方案：
+当前项目只保留本地发布方案：
 
-- `worker-api/`
+1. 在本地启动 Hugo 和 Publisher API
+2. 通过 `/publisher/` 完成新建、修改、删除文章以及 Media Upload
+3. 确认生成的 `content/...` 文件无误
+4. 手动执行 Git 提交与推送
 
-用于 Cloudflare Worker 部署，适合：
+也就是说：
 
-- GitHub Pages 提供静态站点
-- Cloudflare Worker 提供动态发布 API
-
-这部分适合线上使用。  
-本地调试时，推荐优先使用 `scripts/local-publish-server.cjs`。
+- 页面内容编辑发生在本地
+- 实际文件写入发生在本地仓库
+- 最终上线依赖你自己的 Git 提交和推送
 
 ## 常用命令
 
@@ -422,4 +414,4 @@ npm run publisher:local-api
 - 内容排序和统计面板
 - 草稿/发布状态管理
 - 图片库管理
-- 更完整的线上发布认证流程
+- 发布前校验与批量检查工具

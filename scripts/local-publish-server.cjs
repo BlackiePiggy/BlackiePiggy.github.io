@@ -202,7 +202,6 @@ function defaultTemplateContent(name) {
 
 function regeneratePublisherArtifacts() {
   execFileSync(process.execPath, [path.join(ROOT, "scripts", "generate-publisher-templates.cjs")], { cwd: ROOT, stdio: "pipe" });
-  execFileSync(process.execPath, [path.join(ROOT, "scripts", "generate-decap-config.cjs")], { cwd: ROOT, stdio: "pipe" });
 }
 
 function parseEndpoint(config) {
