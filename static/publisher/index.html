@@ -3,58 +3,82 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Self Publisher</title>
+    <title>Publisher</title>
     <style>
-      :root { --bg:#f3f4f6; --fg:#111827; --card:#fff; --bd:#d1d5db; --acc:#0f766e; --muted:#6b7280; }
+      :root { --bg:#f3f4f6; --fg:#111827; --muted:#6b7280; --card:#fff; --bd:#d1d5db; --acc:#0f766e; }
       * { box-sizing: border-box; }
-      body { margin:0; font-family:"Segoe UI",sans-serif; background:var(--bg); color:var(--fg); }
-      .wrap { max-width: 980px; margin: 24px auto; padding: 0 16px; }
+      body { margin:0; background:var(--bg); color:var(--fg); font-family:"Segoe UI",sans-serif; }
+      .wrap { max-width: 1040px; margin: 24px auto; padding: 0 16px; }
       .card { background:var(--card); border:1px solid var(--bd); border-radius:10px; padding:14px; margin-bottom:12px; }
       .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
       .field { margin-bottom:10px; }
       label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
-      input, select, textarea, button { width:100%; padding:10px; border:1px solid var(--bd); border-radius:8px; font-size:14px; }
-      textarea { min-height:140px; resize:vertical; }
+      input, select, textarea, button { width:100%; border:1px solid var(--bd); border-radius:8px; padding:10px; font-size:14px; }
+      textarea { min-height:150px; resize:vertical; }
       .btn { background:var(--acc); color:#fff; border:none; cursor:pointer; }
       .status { white-space:pre-wrap; font-size:13px; }
       .obj, .list-item { border:1px dashed var(--bd); border-radius:8px; padding:8px; margin:8px 0; }
-      .muted { font-size:12px; color:var(--muted); }
-      .preview { max-width:220px; border:1px solid var(--bd); border-radius:8px; }
-      @media (max-width:760px) { .row { grid-template-columns:1fr; } }
+      .inline { display:flex; gap:8px; align-items:center; }
+      .inline > * { width:auto; }
+      .muted { color:var(--muted); font-size:12px; }
+      .preview { max-width:220px; border-radius:8px; border:1px solid var(--bd); }
+      @media (max-width: 760px) { .row { grid-template-columns:1fr; } }
     </style>
   </head>
   <body>
     <div class="wrap">
-      <h1>自建发布页</h1>
+      <h1>内容发布与管理</h1>
 
       <div class="card">
         <div class="row">
           <div class="field">
-            <label>Worker API 地址</label>
-            <input id="apiBase" placeholder="https://your-worker.workers.dev/publish" />
+            <label>API 地址</label>
+            <input id="apiBase" placeholder="http://127.0.0.1:8790" />
           </div>
           <div class="field">
             <label>发布密码</label>
-            <input id="password" type="password" placeholder="PUBLISH_PASSWORD" />
+            <input id="password" type="password" />
           </div>
         </div>
         <div class="row">
           <div class="field">
-            <label>模板</label>
-            <select id="template"></select>
+            <label>模式</label>
+            <select id="mode">
+              <option value="create">新建发布</option>
+              <option value="edit">管理修改</option>
+            </select>
           </div>
           <div class="field">
-            <label>Slug</label>
-            <input id="slug" placeholder="my-new-post" />
+            <label>模板分类</label>
+            <select id="template"></select>
           </div>
         </div>
-        <p class="muted">模板由 `archetypes/*.md` 自动生成。</p>
+        <p class="muted">本地默认值：API=`http://127.0.0.1:8790`，密码=`123456`。</p>
+      </div>
+
+      <div class="card" id="editPanel" style="display:none">
+        <div class="row">
+          <div class="field">
+            <label>现有内容</label>
+            <select id="itemSelect"></select>
+          </div>
+          <div class="field inline" style="padding-top:22px">
+            <button id="reloadItemsBtn" type="button">刷新列表</button>
+            <button id="loadItemBtn" type="button">加载到表单</button>
+          </div>
+        </div>
       </div>
 
       <div class="card">
-        <div class="field">
-          <label>Featured 图（上传或 Ctrl+V 粘贴）</label>
-          <input id="featuredFile" type="file" accept="image/*" />
+        <div class="row">
+          <div class="field">
+            <label>Slug（目录名）</label>
+            <input id="slug" placeholder="my-new-post" />
+          </div>
+          <div class="field">
+            <label>Featured 图（上传/粘贴）</label>
+            <input id="featuredFile" type="file" accept="image/*" />
+          </div>
         </div>
         <img id="preview" class="preview" style="display:none" alt="featured preview" />
       </div>
@@ -62,7 +86,7 @@
       <div class="card"><div id="formRoot"></div></div>
 
       <div class="card">
-        <button id="publishBtn" class="btn">一键发布</button>
+        <button id="submitBtn" class="btn">确认提交</button>
         <div id="status" class="status" style="margin-top:10px"></div>
       </div>
     </div>
@@ -70,9 +94,43 @@
     <script>
       let templates = [];
       let featuredData = null;
+      let loadedItemSlug = "";
+      const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
-      const defaultApi = localStorage.getItem("publisher_api") || "";
-      document.getElementById("apiBase").value = defaultApi;
+      const apiInput = document.getElementById("apiBase");
+      const pwdInput = document.getElementById("password");
+      apiInput.value = localStorage.getItem("publisher_api_base") || (isLocal ? "http://127.0.0.1:8790" : "");
+      pwdInput.value = localStorage.getItem("publisher_password") || (isLocal ? "123456" : "");
+
+      function apiBase() {
+        return (apiInput.value || "").replace(/\/+$/, "");
+      }
+
+      function setStatus(msg, error = false) {
+        const el = document.getElementById("status");
+        el.style.color = error ? "#b91c1c" : "#065f46";
+        el.textContent = msg;
+      }
+
+      function nowIsoLocal() {
+        const d = new Date();
+        const p = (n) => String(n).padStart(2, "0");
+        const y = d.getFullYear();
+        const m = p(d.getMonth() + 1);
+        const day = p(d.getDate());
+        const h = p(d.getHours());
+        const mi = p(d.getMinutes());
+        const s = p(d.getSeconds());
+        const offsetMin = -d.getTimezoneOffset();
+        const sign = offsetMin >= 0 ? "+" : "-";
+        const oh = p(Math.floor(Math.abs(offsetMin) / 60));
+        const om = p(Math.abs(offsetMin) % 60);
+        return `${y}-${m}-${day}T${h}:${mi}:${s}${sign}${oh}:${om}`;
+      }
+
+      function slugify(s) {
+        return String(s || "").toLowerCase().trim().replace(/[\s_]+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      }
 
       function e(tag, attrs = {}, children = []) {
         const el = document.createElement(tag);
@@ -83,16 +141,6 @@
         });
         children.forEach((c) => el.appendChild(c));
         return el;
-      }
-
-      function status(msg, err = false) {
-        const box = document.getElementById("status");
-        box.style.color = err ? "#b91c1c" : "#065f46";
-        box.textContent = msg;
-      }
-
-      function slugify(s) {
-        return String(s || "").toLowerCase().trim().replace(/[\s_]+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-").replace(/^-|-$/g, "");
       }
 
       function setByPath(target, path, value) {
@@ -109,47 +157,100 @@
         }
       }
 
+      function getByPath(obj, path) {
+        const parts = path.replace(/\[(\d+)\]/g, ".$1").split(".");
+        let cur = obj;
+        for (const p of parts) {
+          if (cur == null) return undefined;
+          cur = cur[p];
+        }
+        return cur;
+      }
+
+      function clone(v) {
+        return JSON.parse(JSON.stringify(v));
+      }
+
+      function mergeFieldDefaults(field, values, path) {
+        const out = clone(field);
+        const v = getByPath(values || {}, path);
+        if (v !== undefined) out.default = v;
+        if (out.type === "object" && Array.isArray(out.fields)) {
+          out.fields = out.fields.map((f) => mergeFieldDefaults(f, values, `${path}.${f.name}`));
+        } else if (out.type === "list" && Array.isArray(out.fields)) {
+          if (Array.isArray(v) && v.length && typeof v[0] === "object") {
+            out.default = v;
+          }
+        }
+        return out;
+      }
+
       function renderPrimitive(field, path) {
         const box = e("div", { class: "field" });
         box.appendChild(e("label", { text: field.name }));
+
+        if (field.name === "body") {
+          const ta = e("textarea", { "data-path": path, placeholder: "正文 Markdown" });
+          if (field.default != null) ta.value = String(field.default);
+          box.appendChild(ta);
+          return box;
+        }
+
         const type = field.type === "datetime" ? "datetime-local" : (field.type === "number" ? "number" : (field.type === "boolean" ? "checkbox" : "text"));
         const input = e("input", { type, "data-path": path });
-        if (field.default !== null && field.default !== undefined) {
+        if (field.default != null) {
           if (field.type === "boolean") input.checked = !!field.default;
           else if (field.type === "datetime") input.value = String(field.default).slice(0, 16);
           else input.value = field.default;
         }
-        box.appendChild(input);
+        if (field.type === "datetime") {
+          const wrap = e("div", { class: "inline" });
+          const nowBtn = e("button", { type: "button", text: "当前时刻" });
+          nowBtn.onclick = () => { input.value = nowIsoLocal().slice(0, 16); };
+          wrap.appendChild(input);
+          wrap.appendChild(nowBtn);
+          box.appendChild(wrap);
+        } else {
+          box.appendChild(input);
+        }
         return box;
       }
 
-      function renderObject(field, path) {
-        const box = e("div", { class: "obj" });
-        box.appendChild(e("label", { text: field.name }));
-        (field.fields || []).forEach((f) => box.appendChild(renderField(f, `${path}.${f.name}`)));
-        return box;
+      function addListItem(field, root, path, itemValue, idx) {
+        const item = e("div", { class: "list-item" });
+        if (field.itemType === "object") {
+          (field.fields || []).forEach((sub) => {
+            const sf = clone(sub);
+            if (itemValue && typeof itemValue === "object" && itemValue[sub.name] !== undefined) sf.default = itemValue[sub.name];
+            item.appendChild(renderField(sf, `${path}[${idx}].${sub.name}`));
+          });
+        } else {
+          item.appendChild(renderPrimitive({ name: "item", type: field.itemType || "string", default: itemValue ?? "" }, `${path}[${idx}]`));
+        }
+        const rm = e("button", { type: "button", text: "删除" });
+        rm.onclick = () => item.remove();
+        item.appendChild(rm);
+        root.appendChild(item);
       }
 
       function renderList(field, path) {
         const box = e("div", { class: "field" });
         box.appendChild(e("label", { text: field.name }));
         const root = e("div");
-        const add = e("button", { type: "button", text: "添加一项" });
-        add.onclick = () => {
-          const idx = root.children.length;
-          const item = e("div", { class: "list-item" });
-          if (field.itemType === "object") {
-            (field.fields || []).forEach((f) => item.appendChild(renderField(f, `${path}[${idx}].${f.name}`)));
-          } else {
-            item.appendChild(renderPrimitive({ name: "item", type: field.itemType || "string", default: "" }, `${path}[${idx}]`));
-          }
-          const rm = e("button", { type: "button", text: "删除" });
-          rm.onclick = () => item.remove();
-          item.appendChild(rm);
-          root.appendChild(item);
-        };
+        const addBtn = e("button", { type: "button", text: "添加一项" });
+        addBtn.onclick = () => addListItem(field, root, path, undefined, root.children.length);
         box.appendChild(root);
-        box.appendChild(add);
+        box.appendChild(addBtn);
+
+        const defaults = Array.isArray(field.default) ? field.default : [];
+        defaults.forEach((v, i) => addListItem(field, root, path, v, i));
+        return box;
+      }
+
+      function renderObject(field, path) {
+        const box = e("div", { class: "obj" });
+        box.appendChild(e("label", { text: field.name }));
+        (field.fields || []).forEach((sub) => box.appendChild(renderField(sub, `${path}.${sub.name}`)));
         return box;
       }
 
@@ -159,98 +260,166 @@
         return renderPrimitive(field, path);
       }
 
-      function collectValues() {
+      function collectFormData() {
         const out = {};
         document.querySelectorAll("[data-path]").forEach((el) => {
           const path = el.getAttribute("data-path");
           let value;
           if (el.type === "checkbox") value = el.checked;
           else if (el.type === "number") value = el.value === "" ? null : Number(el.value);
-          else value = el.value;
+          else if (el.type === "datetime-local") {
+            value = el.value ? `${el.value}:00${nowIsoLocal().slice(-6)}` : "";
+          } else value = el.value;
           if (value !== "" && value !== null) setByPath(out, path, value);
         });
         return out;
       }
 
-      function renderTemplate(name) {
-        const tpl = templates.find((t) => t.name === name);
+      function getTemplateByName(name) {
+        return templates.find((t) => t.name === name);
+      }
+
+      function renderForm(templateName, existingValues = {}) {
+        const tpl = getTemplateByName(templateName);
         const root = document.getElementById("formRoot");
         root.innerHTML = "";
         if (!tpl) return;
-        tpl.fields.forEach((f) => root.appendChild(renderField(f, f.name)));
-        if (!root.querySelector("[data-path='body']")) {
-          root.appendChild(e("div", { class: "field" }, [e("label", { text: "body" }), e("textarea", { "data-path": "body", placeholder: "正文 Markdown" })]));
-        }
+
+        let fields = tpl.fields.map((f) => mergeFieldDefaults(f, existingValues, f.name));
+        if (!fields.some((f) => f.name === "body")) fields.push({ name: "body", type: "string", default: existingValues.body || "" });
+        fields.forEach((f) => root.appendChild(renderField(f, f.name)));
       }
 
-      function readImage(file) {
+      async function loadTemplates() {
+        try {
+          const r = await fetch("/publisher/templates.json");
+          const j = await r.json();
+          templates = j.templates || [];
+        } catch (e1) {
+          const r = await fetch(`${apiBase()}/templates`);
+          const j = await r.json();
+          templates = j.templates || [];
+        }
+
+        const sel = document.getElementById("template");
+        sel.innerHTML = "";
+        templates.forEach((t) => sel.appendChild(e("option", { value: t.name, text: t.name })));
+        if (templates[0]) renderForm(templates[0].name);
+      }
+
+      async function loadItemList() {
+        const template = document.getElementById("template").value;
+        const r = await fetch(`${apiBase()}/content?template=${encodeURIComponent(template)}`);
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || "加载列表失败");
+        const sel = document.getElementById("itemSelect");
+        sel.innerHTML = "";
+        (j.items || []).forEach((it) => {
+          const text = `${it.slug} | ${it.title || ""} | ${it.date || ""}`;
+          sel.appendChild(e("option", { value: it.slug, text }));
+        });
+      }
+
+      async function loadItemToForm() {
+        const template = document.getElementById("template").value;
+        const slug = document.getElementById("itemSelect").value;
+        if (!slug) throw new Error("请先选择内容");
+        const r = await fetch(`${apiBase()}/content/item?template=${encodeURIComponent(template)}&slug=${encodeURIComponent(slug)}`);
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || "加载内容失败");
+        const existing = { ...(j.item.frontmatter || {}), body: j.item.body || "" };
+        loadedItemSlug = slug;
+        document.getElementById("slug").value = slug;
+        renderForm(template, existing);
+      }
+
+      function handleImage(file) {
         if (!file) return;
         const rd = new FileReader();
         rd.onload = () => {
-          const res = rd.result;
-          const idx = res.indexOf(",");
-          featuredData = { name: file.name || "featured.png", mimeType: file.type || "image/png", base64: res.slice(idx + 1) };
+          const result = rd.result;
+          featuredData = {
+            name: file.name || "featured.png",
+            mimeType: file.type || "image/png",
+            base64: result.slice(result.indexOf(",") + 1),
+          };
           const img = document.getElementById("preview");
-          img.src = res;
+          img.src = result;
           img.style.display = "block";
         };
         rd.readAsDataURL(file);
       }
 
-      document.getElementById("featuredFile").addEventListener("change", (e2) => readImage(e2.target.files && e2.target.files[0]));
+      async function submit() {
+        localStorage.setItem("publisher_api_base", apiBase());
+        localStorage.setItem("publisher_password", pwdInput.value);
+
+        const mode = document.getElementById("mode").value;
+        const template = document.getElementById("template").value;
+        const data = collectFormData();
+        let slug = slugify(document.getElementById("slug").value);
+        if (!slug) {
+          slug = slugify(data.title || "new-post");
+          document.getElementById("slug").value = slug;
+        }
+
+        const endpoint = mode === "edit" ? "/update" : "/publish";
+        const resp = await fetch(`${apiBase()}${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ template, slug, password: pwdInput.value, frontmatter: data, featured: featuredData }),
+        });
+        const out = await resp.json();
+        if (!resp.ok) throw new Error(out.error || "提交失败");
+        setStatus(`成功：\n${out.markdownPath}${out.featuredPath ? `\n${out.featuredPath}` : ""}`);
+        if (mode === "edit" && loadedItemSlug !== slug) loadedItemSlug = slug;
+      }
+
+      document.getElementById("mode").onchange = async (ev) => {
+        const editMode = ev.target.value === "edit";
+        document.getElementById("editPanel").style.display = editMode ? "" : "none";
+        featuredData = null;
+        document.getElementById("preview").style.display = "none";
+        document.getElementById("slug").value = "";
+        renderForm(document.getElementById("template").value);
+        if (editMode) {
+          try { await loadItemList(); } catch (err) { setStatus(err.message, true); }
+        }
+      };
+
+      document.getElementById("template").onchange = async () => {
+        renderForm(document.getElementById("template").value);
+        if (document.getElementById("mode").value === "edit") {
+          try { await loadItemList(); } catch (err) { setStatus(err.message, true); }
+        }
+      };
+
+      document.getElementById("reloadItemsBtn").onclick = async () => {
+        try { await loadItemList(); setStatus("列表已刷新"); } catch (err) { setStatus(err.message, true); }
+      };
+      document.getElementById("loadItemBtn").onclick = async () => {
+        try { await loadItemToForm(); setStatus("已加载内容到表单"); } catch (err) { setStatus(err.message, true); }
+      };
+
+      document.getElementById("featuredFile").addEventListener("change", (ev) => {
+        const f = ev.target.files && ev.target.files[0];
+        handleImage(f);
+      });
       document.addEventListener("paste", (ev) => {
         for (const item of ev.clipboardData.items) {
           if (item.type && item.type.startsWith("image/")) {
-            readImage(item.getAsFile());
-            status("已读取剪贴板图片。");
+            handleImage(item.getAsFile());
+            setStatus("已读取剪贴板图片");
             break;
           }
         }
       });
 
-      document.getElementById("publishBtn").onclick = async () => {
-        const btn = document.getElementById("publishBtn");
-        btn.disabled = true;
-        try {
-          const api = document.getElementById("apiBase").value.trim();
-          if (!api) throw new Error("请先填写 Worker API 地址");
-          localStorage.setItem("publisher_api", api);
-
-          const template = document.getElementById("template").value;
-          const password = document.getElementById("password").value;
-          const data = collectValues();
-          let slug = slugify(document.getElementById("slug").value);
-          if (!slug) {
-            slug = slugify(data.title || "new-post");
-            document.getElementById("slug").value = slug;
-          }
-
-          const resp = await fetch(api, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ template, slug, password, frontmatter: data, featured: featuredData }),
-          });
-          const out = await resp.json();
-          if (!resp.ok) throw new Error(out.error || "发布失败");
-          status(`发布成功\n${out.markdownPath}${out.featuredPath ? `\n${out.featuredPath}` : ""}`);
-        } catch (err) {
-          status(err.message || String(err), true);
-        } finally {
-          btn.disabled = false;
-        }
+      document.getElementById("submitBtn").onclick = async () => {
+        try { await submit(); } catch (err) { setStatus(err.message || String(err), true); }
       };
 
-      async function init() {
-        const r = await fetch("/publisher/templates.json");
-        const j = await r.json();
-        templates = j.templates || [];
-        const sel = document.getElementById("template");
-        templates.forEach((t) => sel.appendChild(e("option", { value: t.name, text: t.name })));
-        sel.onchange = () => renderTemplate(sel.value);
-        if (templates[0]) renderTemplate(templates[0].name);
-      }
-
-      init().catch((err) => status(`初始化失败: ${err.message}`, true));
+      loadTemplates().catch((err) => setStatus(`初始化失败: ${err.message}`, true));
     </script>
   </body>
 </html>

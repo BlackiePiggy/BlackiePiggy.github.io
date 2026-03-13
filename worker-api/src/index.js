@@ -30,6 +30,45 @@ function yamlScalar(v) {
   return JSON.stringify(s);
 }
 
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function toIsoWithOffset(value) {
+  if (typeof value !== "string") return value;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})$/.test(value)) return value;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})$/.test(value)) {
+    return value.replace(/(Z|[+-]\d{2}:\d{2})$/, ":00$1").replace(":00Z", ":00+00:00");
+  }
+
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  const yyyy = d.getFullYear();
+  const mm = pad2(d.getMonth() + 1);
+  const dd = pad2(d.getDate());
+  const hh = pad2(d.getHours());
+  const mi = pad2(d.getMinutes());
+  const ss = pad2(d.getSeconds());
+  const offsetMin = -d.getTimezoneOffset();
+  const sign = offsetMin >= 0 ? "+" : "-";
+  const oh = pad2(Math.floor(Math.abs(offsetMin) / 60));
+  const om = pad2(Math.abs(offsetMin) % 60);
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}:${ss}${sign}${oh}:${om}`;
+}
+
+function normalizeDateFields(value, key = "") {
+  if (Array.isArray(value)) return value.map((v) => normalizeDateFields(v));
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) out[k] = normalizeDateFields(v, k);
+    return out;
+  }
+  if (typeof value === "string" && /(^date$|date$|_at$|^publishDate$)/i.test(key)) {
+    return toIsoWithOffset(value);
+  }
+  return value;
+}
+
 function toYaml(value, indent = 0) {
   const pad = " ".repeat(indent);
   if (Array.isArray(value)) {
@@ -59,7 +98,8 @@ function toYaml(value, indent = 0) {
 }
 
 function buildMarkdown(frontmatter, body = "") {
-  return `---\n${toYaml(frontmatter)}\n---\n\n${body || ""}\n`;
+  const cleanBody = String(body || "").replace(/<!--more-->/g, "").replace(/^\s+/, "");
+  return `---\n${toYaml(frontmatter)}\n---\n\n<!--more-->\n\n${cleanBody}\n`;
 }
 
 function utf8ToBase64(str) {
@@ -117,7 +157,7 @@ export default {
       const slug = sanitizeSlug(payload.slug);
       if (!template || !slug) return json({ error: "template 或 slug 无效" }, 400, corsOrigin);
 
-      const frontmatter = payload.frontmatter || {};
+      const frontmatter = normalizeDateFields(payload.frontmatter || {});
       const body = typeof frontmatter.body === "string" ? frontmatter.body : "";
       delete frontmatter.body;
 
