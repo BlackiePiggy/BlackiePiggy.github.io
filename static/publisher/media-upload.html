@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CMS Dashboard - Media Upload</title>
+  <style>
+    :root{--bg:#eef2f7;--panel:#fff;--line:#d7dee7;--text:#15202b;--muted:#637282}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text)}
+    .layout{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+    .side{position:sticky;top:0;height:100vh;overflow-y:auto;background:linear-gradient(160deg,#0d3e39,#0b2e32);color:#dff7f4;padding:20px}
+    .brand{font-size:20px;font-weight:700;margin-bottom:20px}
+    .nav a{display:block;color:#dff7f4;text-decoration:none;padding:10px 12px;border-radius:10px;margin-bottom:6px}
+    .nav a.active,.nav a:hover{background:rgba(255,255,255,.14)}
+    .main{padding:18px}
+    .top,.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+    .top{margin-bottom:14px}
+    .top h1{margin:0 0 6px}
+    .muted{color:var(--muted);font-size:13px}
+    .panel{display:flex;flex-direction:column;gap:10px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    input,button{border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;background:#fff}
+    input{min-width:320px;flex:1}
+    button{cursor:pointer}
+    iframe{width:100%;height:calc(100vh - 210px);border:1px solid var(--line);border-radius:12px;background:#fff}
+    @media (max-width:980px){.layout{grid-template-columns:1fr}.side{position:relative;height:auto}iframe{height:70vh}input{min-width:0;width:100%}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <div class="brand">Publisher CMS</div>
+    <nav class="nav">
+      <a href="/publisher/">总览</a>
+      <a href="/publisher/create.html">新建发布</a>
+      <a href="/publisher/manage.html">内容管理</a>
+      <a href="/publisher/media-upload.html" class="active">Media Upload</a>
+      <a href="/publisher/template-manage.html">模板管理</a>
+    </nav>
+  </aside>
+  <main class="main">
+    <section class="top">
+      <h1>富文本 Media 自动上传 OSS</h1>
+      <div class="muted">此页面已并入 `publisher:local-api`，默认使用同服务路径 `/media-upload-tool/`，不再需要单独启动 `3000` 端口。</div>
+    </section>
+    <section class="panel">
+      <div class="row">
+        <input id="toolUrl" placeholder="http://127.0.0.1:8790/media-upload-tool/" />
+        <button id="openBtn" type="button">加载工具</button>
+      </div>
+      <div class="muted">如果页面空白，确认本地 Publisher API 已启动，并且基础地址填写正确。</div>
+      <iframe id="toolFrame" title="Media Upload Tool" allow="clipboard-read; clipboard-write"></iframe>
+    </section>
+  </main>
+</div>
+<script>
+const local=["localhost","127.0.0.1"].includes(location.hostname);
+const apiBase=localStorage.getItem("publisher_api_base")||(local?"http://127.0.0.1:8790":"");
+const integratedUrl=apiBase?`${apiBase.replace(/\/+$/,"")}/media-upload-tool/`:"";
+const storedUrl=localStorage.getItem("media_upload_tool_url")||"";
+const migratedUrl=/127\.0\.0\.1:3000\/?$/i.test(storedUrl)||/localhost:3000\/?$/i.test(storedUrl)?integratedUrl:storedUrl;
+const defaultUrl=migratedUrl||integratedUrl;
+toolUrl.value=defaultUrl;
+function loadTool(){
+  const url=(toolUrl.value||"").replace(/\/+$/,"");
+  if(!url)return;
+  localStorage.setItem("media_upload_tool_url",url);
+  toolFrame.src=url;
+}
+openBtn.onclick=loadTool;
+if(defaultUrl){
+  localStorage.setItem("media_upload_tool_url",defaultUrl.replace(/\/+$/,""));
+  loadTool();
+}
+</script>
+</body>
+</html>

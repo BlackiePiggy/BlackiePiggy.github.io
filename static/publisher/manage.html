@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CMS Dashboard - 内容管理</title>
+  <style>
+    :root{--bg:#eef2f7;--panel:#fff;--line:#d7dee7;--text:#15202b;--muted:#637282;--brand:#0f766e;--brand2:#1e9b86;--danger:#b91c1c;--chip:#e7f6f2}
+    *{box-sizing:border-box} body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text)}
+    .layout{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+    .side{position:sticky;top:0;height:100vh;overflow-y:auto;background:linear-gradient(160deg,#0d3e39,#0b2e32);color:#dff7f4;padding:20px}
+    .brand{font-size:20px;font-weight:700;margin-bottom:20px}
+    .nav a{display:block;color:#dff7f4;text-decoration:none;padding:10px 12px;border-radius:10px;margin-bottom:6px}
+    .nav a.active,.nav a:hover{background:rgba(255,255,255,.14)}
+    .main{padding:18px}
+    .top,.toolbar{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+    .top{margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+    .top h1{margin:0}.chip{background:var(--chip);color:#0f5a42;padding:4px 10px;border-radius:999px;font-size:12px}
+    .toolbar{display:grid;grid-template-columns:2fr 1fr 1fr auto auto;gap:10px;align-items:end}
+    .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input,select,button{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;font-size:14px}
+    .btn{border:none;background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff;cursor:pointer}
+    .btn-ghost{background:#fff;color:var(--text);cursor:pointer}
+    .cards{margin-top:14px;display:grid;gap:14px}.cards.multi{grid-template-columns:repeat(3,minmax(0,1fr))}.cards.single{grid-template-columns:1fr}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+    .cover{height:190px;background:linear-gradient(135deg,#d8dee8,#c7d2df);display:flex;align-items:center;justify-content:center;color:#314252;font-size:13px}
+    .cover img{width:100%;height:100%;object-fit:cover}
+    .body{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}
+    .title{margin:0;font-size:18px;line-height:1.35}.meta{font-size:12px;color:var(--muted)}.summary{font-size:14px;color:#34424d;line-height:1.5;flex:1}
+    .actions{display:flex;gap:8px}.edit{background:#0f766e;color:#fff;border:none;cursor:pointer}.del{background:#fff;color:var(--danger);border:1px solid #ef9a9a;cursor:pointer}
+    .status{margin-top:10px;font-size:13px;white-space:pre-wrap}.empty{padding:42px 10px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px;background:var(--panel)}
+    .mask{position:fixed;inset:0;background:rgba(10,22,33,.45);display:none;align-items:center;justify-content:center;padding:12px}
+    .mask.open{display:flex}
+    .modal{width:min(460px,100%);background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}
+    .modal h3{margin:0 0 8px}.modal p{margin:0 0 14px;color:#44535f;font-size:14px}.m-actions{display:flex;justify-content:flex-end;gap:8px}
+    @media (max-width:1100px){.toolbar{grid-template-columns:1fr 1fr 1fr 1fr}.cards.multi{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:980px){.layout{grid-template-columns:1fr}.side{position:relative;height:auto}.toolbar{grid-template-columns:1fr}.cards.multi{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <div class="brand">Publisher CMS</div>
+    <nav class="nav">
+      <a href="/publisher/">总览</a>
+      <a href="/publisher/create.html">新建发布</a>
+      <a href="/publisher/manage.html" class="active">内容管理</a>
+      <a href="/publisher/media-upload.html">Media Upload</a>
+      <a href="/publisher/template-manage.html">模板管理</a>
+    </nav>
+  </aside>
+  <main class="main">
+    <section class="top"><h1>内容管理</h1><span id="countBadge" class="chip">0 篇</span></section>
+    <section class="toolbar">
+      <div class="field"><label>API 地址</label><input id="apiBase" /></div>
+      <div class="field"><label>密码</label><input id="password" type="password" /></div>
+      <div class="field"><label>分类</label><select id="template"></select></div>
+      <button id="layoutBtn" class="btn-ghost" type="button">切换到单列</button>
+      <button id="refreshBtn" class="btn" type="button">刷新内容</button>
+    </section>
+    <div id="status" class="status"></div>
+    <section id="cards" class="cards multi"></section>
+  </main>
+</div>
+
+<div id="confirmMask" class="mask">
+  <div class="modal">
+    <h3>确认删除帖子？</h3>
+    <p id="confirmText"></p>
+    <div class="m-actions">
+      <button id="cancelDeleteBtn" class="btn-ghost" type="button">取消</button>
+      <button id="confirmDeleteBtn" class="del" type="button">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const local=["localhost","127.0.0.1"].includes(location.hostname);
+apiBase.value=localStorage.getItem("publisher_api_base")||(local?"http://127.0.0.1:8790":"");
+password.value=localStorage.getItem("publisher_password")||(local?"123456":"");
+let templates=[],layout=localStorage.getItem("publisher_layout")||"multi",pendingDelete=null;
+const st=(m,e=false)=>{status.style.color=e?"#b91c1c":"#155e75";status.textContent=m||""};
+const base=()=>apiBase.value.replace(/\/+$/,"");
+const esc=s=>String(s||"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
+function applyLayout(){cards.className=`cards ${layout}`;layoutBtn.textContent=layout==="multi"?"切换到单列":"切换到多列";}
+function openDeleteModal(){
+  confirmMask.classList.add("open");
+}
+function closeDeleteModal(){
+  confirmMask.classList.remove("open");
+}
+async function loadTemplates(){const r=await fetch("/publisher/templates.json");const j=await r.json();templates=j.templates||[];template.innerHTML="";templates.forEach(t=>{const o=document.createElement("option");o.value=t.name;o.textContent=t.name;template.appendChild(o);});}
+function cardHtml(t,it){const image=it.imageUrl?`<img src="${esc(it.imageUrl)}" alt="">`:`无封面图（可在编辑页上传 featured 图）`;return `<article class="card"><div class="cover">${image}</div><div class="body"><span class="chip">${esc(t)}</span><h3 class="title">${esc(it.title||it.slug)}</h3><div class="meta">${esc(it.date||"未设置日期")} · slug: ${esc(it.slug)}</div><div class="summary">${esc(it.summary||"无摘要")}</div><div class="actions"><button class="edit" data-template="${esc(t)}" data-slug="${esc(it.slug)}">编辑文章</button><button class="del del-btn" data-template="${esc(t)}" data-slug="${esc(it.slug)}" data-title="${esc(it.title||it.slug)}">删除帖子</button></div></div></article>`;}
+async function loadList(){localStorage.setItem("publisher_api_base",base());localStorage.setItem("publisher_password",password.value);const t=template.value;if(!t)return;const r=await fetch(`${base()}/content?template=${encodeURIComponent(t)}`);const j=await r.json();if(!r.ok)throw new Error(j.error||"加载失败");const items=j.items||[];countBadge.textContent=`${items.length} 篇`;cards.innerHTML=items.length?items.map(it=>cardHtml(t,it)).join(""):`<div class="empty">这个分类下还没有内容。</div>`;document.querySelectorAll(".edit").forEach(b=>b.onclick=()=>location.href=`/publisher/edit.html?template=${encodeURIComponent(b.dataset.template)}&slug=${encodeURIComponent(b.dataset.slug)}`);document.querySelectorAll(".del-btn").forEach(b=>b.onclick=()=>{pendingDelete={template:b.dataset.template,slug:b.dataset.slug,title:b.dataset.title};confirmText.textContent=`将删除《${pendingDelete.title}》(${pendingDelete.slug})。此操作不可撤销。`;openDeleteModal();});st(items.length?`已加载 ${items.length} 篇内容`:"暂无内容");}
+async function doDelete(){if(!pendingDelete)return;const r=await fetch(`${base()}/delete`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:password.value,template:pendingDelete.template,slug:pendingDelete.slug})});const j=await r.json();if(!r.ok)throw new Error(j.error||"删除失败");await loadList();st(`已删除：${j.deletedPath}`);}
+layoutBtn.onclick=()=>{layout=layout==="multi"?"single":"multi";localStorage.setItem("publisher_layout",layout);applyLayout();};
+refreshBtn.onclick=()=>loadList().catch(e=>st(e.message,true));template.onchange=()=>loadList().catch(e=>st(e.message,true));
+cancelDeleteBtn.onclick=()=>{closeDeleteModal();pendingDelete=null;};
+confirmDeleteBtn.onclick=async()=>{
+  const snapshot = pendingDelete ? { ...pendingDelete } : null;
+  closeDeleteModal();
+  pendingDelete = null;
+  if (!snapshot) return;
+  pendingDelete = snapshot;
+  try{
+    confirmDeleteBtn.disabled = true;
+    await doDelete();
+  }catch(e){
+    st(e.message,true);
+  }finally{
+    confirmDeleteBtn.disabled = false;
+    pendingDelete = null;
+  }
+};
+confirmMask.onclick=(e)=>{if(e.target===confirmMask){closeDeleteModal();pendingDelete=null;}};
+(async()=>{applyLayout();await loadTemplates();await loadList();})().catch(e=>st(e.message,true));
+</script>
+</body>
+</html>

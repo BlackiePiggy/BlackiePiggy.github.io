@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CMS Dashboard - 新建发布</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root{--bg:#eef2f7;--panel:#fff;--line:#d7dee7;--text:#15202b;--muted:#637282;--brand:#0f766e;--brand2:#1e9b86;--danger:#b91c1c}
+    *{box-sizing:border-box} body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text)}
+    .layout{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+    .side{position:sticky;top:0;height:100vh;overflow-y:auto;background:linear-gradient(160deg,#0d3e39,#0b2e32);color:#dff7f4;padding:20px}
+    .brand{font-size:20px;font-weight:700;margin-bottom:20px}
+    .nav a{display:block;color:#dff7f4;text-decoration:none;padding:10px 12px;border-radius:10px;margin-bottom:6px}
+    .nav a.active,.nav a:hover{background:rgba(255,255,255,.14)}
+    .main{padding:18px}
+    .top{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+    .top h1{margin:0 0 6px}.muted{color:var(--muted);font-size:13px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input,select,textarea,button{width:100%;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px;font-size:14px}
+    textarea{min-height:160px}.btn{border:none;background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff;cursor:pointer}
+    .obj,.list-item{border:1px dashed var(--line);border-radius:10px;padding:8px;margin:8px 0}.inline{display:flex;gap:8px}.inline>*{width:auto}
+    .md-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .md-preview{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fbfdff;min-height:160px;overflow:auto}
+    .md-preview img{display:block;width:80%;max-width:80%;height:auto;margin:10px auto}
+    .preview{max-width:220px;border:1px solid var(--line);border-radius:10px;display:none}.status{white-space:pre-wrap;font-size:13px}
+    @media (max-width:980px){.layout{grid-template-columns:1fr}.side{position:relative;height:auto;padding:14px}.grid{grid-template-columns:1fr}.md-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <div class="brand">Publisher CMS</div>
+    <nav class="nav">
+      <a href="/publisher/">总览</a>
+      <a href="/publisher/create.html" class="active">新建发布</a>
+      <a href="/publisher/manage.html">内容管理</a>
+      <a href="/publisher/media-upload.html">Media Upload</a>
+      <a href="/publisher/template-manage.html">模板管理</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <section class="top">
+      <h1>新建发布</h1>
+      <div class="muted">按模板快速创建新内容，支持 featured 图上传/粘贴。</div>
+    </section>
+
+    <section class="panel">
+      <div class="grid">
+        <div class="field"><label>API 地址</label><input id="apiBase" /></div>
+        <div class="field"><label>密码</label><input id="password" type="password" /></div>
+      </div>
+      <div class="grid" style="margin-top:10px">
+        <div class="field"><label>模板</label><select id="template"></select></div>
+        <div class="field"><label>Slug</label><input id="slug" placeholder="my-new-post" /></div>
+      </div>
+      <div class="field" style="margin-top:10px"><label>Featured 图</label><input id="featuredFile" type="file" accept="image/*" /></div>
+      <img id="preview" class="preview" alt="">
+    </section>
+
+    <section class="panel"><div id="formRoot"></div></section>
+    <section class="panel"><button id="submitBtn" class="btn">发布</button><div id="status" class="status" style="margin-top:10px"></div></section>
+  </main>
+</div>
+
+<script>
+let templates=[],featuredData=null;
+const local=["localhost","127.0.0.1"].includes(location.hostname);
+apiBase.value=localStorage.getItem("publisher_api_base")||(local?"http://127.0.0.1:8790":"");
+password.value=localStorage.getItem("publisher_password")||(local?"123456":"");
+const nowIso=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0"),o=-d.getTimezoneOffset(),s=o>=0?"+":"-";return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}${s}${p(Math.floor(Math.abs(o)/60))}:${p(Math.abs(o)%60)}`};
+const slugify=s=>String(s||"").toLowerCase().trim().replace(/[\s_]+/g,"-").replace(/[^a-z0-9-]/g,"").replace(/-+/g,"-").replace(/^-|-$/g,"");
+const st=(m,e=false)=>{status.style.color=e?"#b91c1c":"#065f46";status.textContent=m};
+const e=(t,a={},c=[])=>{const n=document.createElement(t);Object.entries(a).forEach(([k,v])=>k==="text"?n.textContent=v:n.setAttribute(k,v));c.forEach(x=>n.appendChild(x));return n};
+const setByPath=(o,p,v)=>{const ps=p.replace(/\[(\d+)\]/g,".$1").split(".");let cur=o;ps.forEach((k,i)=>{if(i===ps.length-1)cur[k]=v;else{if(cur[k]==null)cur[k]=/^\d+$/.test(ps[i+1])?[]:{};cur=cur[k];}})};
+function renderField(f,path){
+  if(f.type==="object"){const b=e("div",{class:"obj"});b.appendChild(e("label",{text:f.name}));(f.fields||[]).forEach(s=>b.appendChild(renderField(s,`${path}.${s.name}`)));return b;}
+  if(f.type==="list"){const b=e("div",{class:"field"});b.appendChild(e("label",{text:f.name}));const r=e("div");const add=e("button",{type:"button",text:"添加一项"});add.onclick=()=>{const i=e("div",{class:"list-item"}),idx=r.children.length;if(f.itemType==="object")(f.fields||[]).forEach(s=>i.appendChild(renderField(s,`${path}[${idx}].${s.name}`)));else i.appendChild(renderField({name:"item",type:f.itemType||"string"},`${path}[${idx}]`));const rm=e("button",{type:"button",text:"删除"});rm.onclick=()=>i.remove();i.appendChild(rm);r.appendChild(i)};b.appendChild(r);b.appendChild(add);return b;}
+  const b=e("div",{class:"field"});b.appendChild(e("label",{text:f.name}));
+  if(f.name==="body"){const wrap=e("div",{class:"md-grid"});const ta=e("textarea",{"data-path":path,"data-md":"1"});if(f.default)ta.value=f.default;const pv=e("div",{class:"md-preview","data-preview-for":path});wrap.appendChild(ta);wrap.appendChild(pv);b.appendChild(wrap);return b;}
+  const type=f.type==="datetime"?"datetime-local":(f.type==="number"?"number":(f.type==="boolean"?"checkbox":"text"));
+  const input=e("input",{type,"data-path":path});if(f.default!=null){if(type==="checkbox")input.checked=!!f.default;else if(type==="datetime-local")input.value=String(f.default).slice(0,16);else input.value=f.default;}
+  if(f.type==="datetime"){const w=e("div",{class:"inline"}),btn=e("button",{type:"button",text:"当前时刻"});btn.onclick=()=>input.value=nowIso().slice(0,16);w.appendChild(input);w.appendChild(btn);b.appendChild(w);} else b.appendChild(input);
+  return b;
+}
+function renderForm(name){const t=templates.find(x=>x.name===name);formRoot.innerHTML="";if(!t)return;const fs=[...t.fields];if(!fs.some(x=>x.name==="body"))fs.push({name:"body",type:"string"});fs.forEach(f=>formRoot.appendChild(renderField(f,f.name)));}
+function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));}
+function renderMarkdown(md){if(window.marked&&window.marked.parse)return window.marked.parse(md||"");return `<pre>${escapeHtml(md||"")}</pre>`;}
+function bindBodyPreview(){document.querySelectorAll("textarea[data-md='1']").forEach((ta)=>{const path=ta.dataset.path;const pv=document.querySelector(`[data-preview-for="${path}"]`);if(!pv)return;const update=()=>pv.innerHTML=renderMarkdown(ta.value);ta.addEventListener("input",update);update();});}
+function collect(){const out={};document.querySelectorAll("[data-path]").forEach(el=>{const p=el.dataset.path;let v;if(el.type==="checkbox")v=el.checked;else if(el.type==="number")v=el.value===""?null:Number(el.value);else if(el.type==="datetime-local")v=el.value?`${el.value}:00${nowIso().slice(-6)}`:"";else v=el.value;if(v!==""&&v!==null)setByPath(out,p,v)});return out;}
+featuredFile.onchange=(ev)=>{const f=ev.target.files&&ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const rs=r.result;featuredData={name:f.name,mimeType:f.type||"image/png",base64:rs.slice(rs.indexOf(",")+1)};preview.src=rs;preview.style.display="block"};r.readAsDataURL(f)};
+document.addEventListener("paste",(ev)=>{for(const i of ev.clipboardData.items){if(i.type.startsWith("image/")){const f=i.getAsFile();const r=new FileReader();r.onload=()=>{const rs=r.result;featuredData={name:f.name||"featured.png",mimeType:f.type||"image/png",base64:rs.slice(rs.indexOf(",")+1)};preview.src=rs;preview.style.display="block"};r.readAsDataURL(f);break}}});
+template.onchange=()=>{renderForm(template.value);bindBodyPreview();};
+submitBtn.onclick=async()=>{try{const base=apiBase.value.replace(/\/+$/,"");localStorage.setItem("publisher_api_base",base);localStorage.setItem("publisher_password",password.value);const data=collect();let s=slugify(slug.value);if(!s){s=slugify(data.title||"new-post");slug.value=s}const r=await fetch(`${base}/publish`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:template.value,slug:s,password:password.value,frontmatter:data,featured:featuredData})});const j=await r.json();if(!r.ok)throw new Error(j.error||"发布失败");st(`发布成功\n${j.markdownPath}`)}catch(err){st(err.message,true)}};
+(async()=>{const r=await fetch("/publisher/templates.json");const j=await r.json();templates=j.templates||[];templates.forEach(t=>template.appendChild(e("option",{value:t.name,text:t.name})));if(templates[0]){renderForm(templates[0].name);bindBodyPreview();}})().catch(err=>st(err.message,true));
+</script>
+</body>
+</html>

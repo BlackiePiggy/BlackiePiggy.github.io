@@ -1,425 +1,46 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Publisher</title>
-    <style>
-      :root { --bg:#f3f4f6; --fg:#111827; --muted:#6b7280; --card:#fff; --bd:#d1d5db; --acc:#0f766e; }
-      * { box-sizing: border-box; }
-      body { margin:0; background:var(--bg); color:var(--fg); font-family:"Segoe UI",sans-serif; }
-      .wrap { max-width: 1040px; margin: 24px auto; padding: 0 16px; }
-      .card { background:var(--card); border:1px solid var(--bd); border-radius:10px; padding:14px; margin-bottom:12px; }
-      .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-      .field { margin-bottom:10px; }
-      label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
-      input, select, textarea, button { width:100%; border:1px solid var(--bd); border-radius:8px; padding:10px; font-size:14px; }
-      textarea { min-height:150px; resize:vertical; }
-      .btn { background:var(--acc); color:#fff; border:none; cursor:pointer; }
-      .status { white-space:pre-wrap; font-size:13px; }
-      .obj, .list-item { border:1px dashed var(--bd); border-radius:8px; padding:8px; margin:8px 0; }
-      .inline { display:flex; gap:8px; align-items:center; }
-      .inline > * { width:auto; }
-      .muted { color:var(--muted); font-size:12px; }
-      .preview { max-width:220px; border-radius:8px; border:1px solid var(--bd); }
-      @media (max-width: 760px) { .row { grid-template-columns:1fr; } }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <h1>内容发布与管理</h1>
-
-      <div class="card">
-        <div class="row">
-          <div class="field">
-            <label>API 地址</label>
-            <input id="apiBase" placeholder="http://127.0.0.1:8790" />
-          </div>
-          <div class="field">
-            <label>发布密码</label>
-            <input id="password" type="password" />
-          </div>
-        </div>
-        <div class="row">
-          <div class="field">
-            <label>模式</label>
-            <select id="mode">
-              <option value="create">新建发布</option>
-              <option value="edit">管理修改</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>模板分类</label>
-            <select id="template"></select>
-          </div>
-        </div>
-        <p class="muted">本地默认值：API=`http://127.0.0.1:8790`，密码=`123456`。</p>
-      </div>
-
-      <div class="card" id="editPanel" style="display:none">
-        <div class="row">
-          <div class="field">
-            <label>现有内容</label>
-            <select id="itemSelect"></select>
-          </div>
-          <div class="field inline" style="padding-top:22px">
-            <button id="reloadItemsBtn" type="button">刷新列表</button>
-            <button id="loadItemBtn" type="button">加载到表单</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="row">
-          <div class="field">
-            <label>Slug（目录名）</label>
-            <input id="slug" placeholder="my-new-post" />
-          </div>
-          <div class="field">
-            <label>Featured 图（上传/粘贴）</label>
-            <input id="featuredFile" type="file" accept="image/*" />
-          </div>
-        </div>
-        <img id="preview" class="preview" style="display:none" alt="featured preview" />
-      </div>
-
-      <div class="card"><div id="formRoot"></div></div>
-
-      <div class="card">
-        <button id="submitBtn" class="btn">确认提交</button>
-        <div id="status" class="status" style="margin-top:10px"></div>
-      </div>
-    </div>
-
-    <script>
-      let templates = [];
-      let featuredData = null;
-      let loadedItemSlug = "";
-      const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-
-      const apiInput = document.getElementById("apiBase");
-      const pwdInput = document.getElementById("password");
-      apiInput.value = localStorage.getItem("publisher_api_base") || (isLocal ? "http://127.0.0.1:8790" : "");
-      pwdInput.value = localStorage.getItem("publisher_password") || (isLocal ? "123456" : "");
-
-      function apiBase() {
-        return (apiInput.value || "").replace(/\/+$/, "");
-      }
-
-      function setStatus(msg, error = false) {
-        const el = document.getElementById("status");
-        el.style.color = error ? "#b91c1c" : "#065f46";
-        el.textContent = msg;
-      }
-
-      function nowIsoLocal() {
-        const d = new Date();
-        const p = (n) => String(n).padStart(2, "0");
-        const y = d.getFullYear();
-        const m = p(d.getMonth() + 1);
-        const day = p(d.getDate());
-        const h = p(d.getHours());
-        const mi = p(d.getMinutes());
-        const s = p(d.getSeconds());
-        const offsetMin = -d.getTimezoneOffset();
-        const sign = offsetMin >= 0 ? "+" : "-";
-        const oh = p(Math.floor(Math.abs(offsetMin) / 60));
-        const om = p(Math.abs(offsetMin) % 60);
-        return `${y}-${m}-${day}T${h}:${mi}:${s}${sign}${oh}:${om}`;
-      }
-
-      function slugify(s) {
-        return String(s || "").toLowerCase().trim().replace(/[\s_]+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-").replace(/^-|-$/g, "");
-      }
-
-      function e(tag, attrs = {}, children = []) {
-        const el = document.createElement(tag);
-        Object.entries(attrs).forEach(([k, v]) => {
-          if (k === "class") el.className = v;
-          else if (k === "text") el.textContent = v;
-          else el.setAttribute(k, v);
-        });
-        children.forEach((c) => el.appendChild(c));
-        return el;
-      }
-
-      function setByPath(target, path, value) {
-        const parts = path.replace(/\[(\d+)\]/g, ".$1").split(".");
-        let cur = target;
-        for (let i = 0; i < parts.length; i++) {
-          const p = parts[i];
-          const last = i === parts.length - 1;
-          if (last) cur[p] = value;
-          else {
-            if (cur[p] === undefined) cur[p] = /^\d+$/.test(parts[i + 1]) ? [] : {};
-            cur = cur[p];
-          }
-        }
-      }
-
-      function getByPath(obj, path) {
-        const parts = path.replace(/\[(\d+)\]/g, ".$1").split(".");
-        let cur = obj;
-        for (const p of parts) {
-          if (cur == null) return undefined;
-          cur = cur[p];
-        }
-        return cur;
-      }
-
-      function clone(v) {
-        return JSON.parse(JSON.stringify(v));
-      }
-
-      function mergeFieldDefaults(field, values, path) {
-        const out = clone(field);
-        const v = getByPath(values || {}, path);
-        if (v !== undefined) out.default = v;
-        if (out.type === "object" && Array.isArray(out.fields)) {
-          out.fields = out.fields.map((f) => mergeFieldDefaults(f, values, `${path}.${f.name}`));
-        } else if (out.type === "list" && Array.isArray(out.fields)) {
-          if (Array.isArray(v) && v.length && typeof v[0] === "object") {
-            out.default = v;
-          }
-        }
-        return out;
-      }
-
-      function renderPrimitive(field, path) {
-        const box = e("div", { class: "field" });
-        box.appendChild(e("label", { text: field.name }));
-
-        if (field.name === "body") {
-          const ta = e("textarea", { "data-path": path, placeholder: "正文 Markdown" });
-          if (field.default != null) ta.value = String(field.default);
-          box.appendChild(ta);
-          return box;
-        }
-
-        const type = field.type === "datetime" ? "datetime-local" : (field.type === "number" ? "number" : (field.type === "boolean" ? "checkbox" : "text"));
-        const input = e("input", { type, "data-path": path });
-        if (field.default != null) {
-          if (field.type === "boolean") input.checked = !!field.default;
-          else if (field.type === "datetime") input.value = String(field.default).slice(0, 16);
-          else input.value = field.default;
-        }
-        if (field.type === "datetime") {
-          const wrap = e("div", { class: "inline" });
-          const nowBtn = e("button", { type: "button", text: "当前时刻" });
-          nowBtn.onclick = () => { input.value = nowIsoLocal().slice(0, 16); };
-          wrap.appendChild(input);
-          wrap.appendChild(nowBtn);
-          box.appendChild(wrap);
-        } else {
-          box.appendChild(input);
-        }
-        return box;
-      }
-
-      function addListItem(field, root, path, itemValue, idx) {
-        const item = e("div", { class: "list-item" });
-        if (field.itemType === "object") {
-          (field.fields || []).forEach((sub) => {
-            const sf = clone(sub);
-            if (itemValue && typeof itemValue === "object" && itemValue[sub.name] !== undefined) sf.default = itemValue[sub.name];
-            item.appendChild(renderField(sf, `${path}[${idx}].${sub.name}`));
-          });
-        } else {
-          item.appendChild(renderPrimitive({ name: "item", type: field.itemType || "string", default: itemValue ?? "" }, `${path}[${idx}]`));
-        }
-        const rm = e("button", { type: "button", text: "删除" });
-        rm.onclick = () => item.remove();
-        item.appendChild(rm);
-        root.appendChild(item);
-      }
-
-      function renderList(field, path) {
-        const box = e("div", { class: "field" });
-        box.appendChild(e("label", { text: field.name }));
-        const root = e("div");
-        const addBtn = e("button", { type: "button", text: "添加一项" });
-        addBtn.onclick = () => addListItem(field, root, path, undefined, root.children.length);
-        box.appendChild(root);
-        box.appendChild(addBtn);
-
-        const defaults = Array.isArray(field.default) ? field.default : [];
-        defaults.forEach((v, i) => addListItem(field, root, path, v, i));
-        return box;
-      }
-
-      function renderObject(field, path) {
-        const box = e("div", { class: "obj" });
-        box.appendChild(e("label", { text: field.name }));
-        (field.fields || []).forEach((sub) => box.appendChild(renderField(sub, `${path}.${sub.name}`)));
-        return box;
-      }
-
-      function renderField(field, path) {
-        if (field.type === "object") return renderObject(field, path);
-        if (field.type === "list") return renderList(field, path);
-        return renderPrimitive(field, path);
-      }
-
-      function collectFormData() {
-        const out = {};
-        document.querySelectorAll("[data-path]").forEach((el) => {
-          const path = el.getAttribute("data-path");
-          let value;
-          if (el.type === "checkbox") value = el.checked;
-          else if (el.type === "number") value = el.value === "" ? null : Number(el.value);
-          else if (el.type === "datetime-local") {
-            value = el.value ? `${el.value}:00${nowIsoLocal().slice(-6)}` : "";
-          } else value = el.value;
-          if (value !== "" && value !== null) setByPath(out, path, value);
-        });
-        return out;
-      }
-
-      function getTemplateByName(name) {
-        return templates.find((t) => t.name === name);
-      }
-
-      function renderForm(templateName, existingValues = {}) {
-        const tpl = getTemplateByName(templateName);
-        const root = document.getElementById("formRoot");
-        root.innerHTML = "";
-        if (!tpl) return;
-
-        let fields = tpl.fields.map((f) => mergeFieldDefaults(f, existingValues, f.name));
-        if (!fields.some((f) => f.name === "body")) fields.push({ name: "body", type: "string", default: existingValues.body || "" });
-        fields.forEach((f) => root.appendChild(renderField(f, f.name)));
-      }
-
-      async function loadTemplates() {
-        try {
-          const r = await fetch("/publisher/templates.json");
-          const j = await r.json();
-          templates = j.templates || [];
-        } catch (e1) {
-          const r = await fetch(`${apiBase()}/templates`);
-          const j = await r.json();
-          templates = j.templates || [];
-        }
-
-        const sel = document.getElementById("template");
-        sel.innerHTML = "";
-        templates.forEach((t) => sel.appendChild(e("option", { value: t.name, text: t.name })));
-        if (templates[0]) renderForm(templates[0].name);
-      }
-
-      async function loadItemList() {
-        const template = document.getElementById("template").value;
-        const r = await fetch(`${apiBase()}/content?template=${encodeURIComponent(template)}`);
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.error || "加载列表失败");
-        const sel = document.getElementById("itemSelect");
-        sel.innerHTML = "";
-        (j.items || []).forEach((it) => {
-          const text = `${it.slug} | ${it.title || ""} | ${it.date || ""}`;
-          sel.appendChild(e("option", { value: it.slug, text }));
-        });
-      }
-
-      async function loadItemToForm() {
-        const template = document.getElementById("template").value;
-        const slug = document.getElementById("itemSelect").value;
-        if (!slug) throw new Error("请先选择内容");
-        const r = await fetch(`${apiBase()}/content/item?template=${encodeURIComponent(template)}&slug=${encodeURIComponent(slug)}`);
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.error || "加载内容失败");
-        const existing = { ...(j.item.frontmatter || {}), body: j.item.body || "" };
-        loadedItemSlug = slug;
-        document.getElementById("slug").value = slug;
-        renderForm(template, existing);
-      }
-
-      function handleImage(file) {
-        if (!file) return;
-        const rd = new FileReader();
-        rd.onload = () => {
-          const result = rd.result;
-          featuredData = {
-            name: file.name || "featured.png",
-            mimeType: file.type || "image/png",
-            base64: result.slice(result.indexOf(",") + 1),
-          };
-          const img = document.getElementById("preview");
-          img.src = result;
-          img.style.display = "block";
-        };
-        rd.readAsDataURL(file);
-      }
-
-      async function submit() {
-        localStorage.setItem("publisher_api_base", apiBase());
-        localStorage.setItem("publisher_password", pwdInput.value);
-
-        const mode = document.getElementById("mode").value;
-        const template = document.getElementById("template").value;
-        const data = collectFormData();
-        let slug = slugify(document.getElementById("slug").value);
-        if (!slug) {
-          slug = slugify(data.title || "new-post");
-          document.getElementById("slug").value = slug;
-        }
-
-        const endpoint = mode === "edit" ? "/update" : "/publish";
-        const resp = await fetch(`${apiBase()}${endpoint}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ template, slug, password: pwdInput.value, frontmatter: data, featured: featuredData }),
-        });
-        const out = await resp.json();
-        if (!resp.ok) throw new Error(out.error || "提交失败");
-        setStatus(`成功：\n${out.markdownPath}${out.featuredPath ? `\n${out.featuredPath}` : ""}`);
-        if (mode === "edit" && loadedItemSlug !== slug) loadedItemSlug = slug;
-      }
-
-      document.getElementById("mode").onchange = async (ev) => {
-        const editMode = ev.target.value === "edit";
-        document.getElementById("editPanel").style.display = editMode ? "" : "none";
-        featuredData = null;
-        document.getElementById("preview").style.display = "none";
-        document.getElementById("slug").value = "";
-        renderForm(document.getElementById("template").value);
-        if (editMode) {
-          try { await loadItemList(); } catch (err) { setStatus(err.message, true); }
-        }
-      };
-
-      document.getElementById("template").onchange = async () => {
-        renderForm(document.getElementById("template").value);
-        if (document.getElementById("mode").value === "edit") {
-          try { await loadItemList(); } catch (err) { setStatus(err.message, true); }
-        }
-      };
-
-      document.getElementById("reloadItemsBtn").onclick = async () => {
-        try { await loadItemList(); setStatus("列表已刷新"); } catch (err) { setStatus(err.message, true); }
-      };
-      document.getElementById("loadItemBtn").onclick = async () => {
-        try { await loadItemToForm(); setStatus("已加载内容到表单"); } catch (err) { setStatus(err.message, true); }
-      };
-
-      document.getElementById("featuredFile").addEventListener("change", (ev) => {
-        const f = ev.target.files && ev.target.files[0];
-        handleImage(f);
-      });
-      document.addEventListener("paste", (ev) => {
-        for (const item of ev.clipboardData.items) {
-          if (item.type && item.type.startsWith("image/")) {
-            handleImage(item.getAsFile());
-            setStatus("已读取剪贴板图片");
-            break;
-          }
-        }
-      });
-
-      document.getElementById("submitBtn").onclick = async () => {
-        try { await submit(); } catch (err) { setStatus(err.message || String(err), true); }
-      };
-
-      loadTemplates().catch((err) => setStatus(`初始化失败: ${err.message}`, true));
-    </script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CMS Dashboard - 总览</title>
+  <style>
+    :root{--bg:#eef2f7;--panel:#fff;--line:#d7dee7;--text:#15202b;--muted:#637282;--brand:#0f766e;--brand2:#1e9b86}
+    *{box-sizing:border-box} body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text)}
+    .layout{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+    .side{position:sticky;top:0;height:100vh;overflow-y:auto;background:linear-gradient(160deg,#0d3e39,#0b2e32);color:#dff7f4;padding:20px}
+    .brand{font-size:20px;font-weight:700;margin-bottom:20px}
+    .nav a{display:block;color:#dff7f4;text-decoration:none;padding:10px 12px;border-radius:10px;margin-bottom:6px}
+    .nav a.active,.nav a:hover{background:rgba(255,255,255,.14)}
+    .main{padding:18px}
+    .top{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+    .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+    .btn{display:inline-block;margin-top:10px;padding:10px 14px;border-radius:10px;background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff;text-decoration:none}
+    @media (max-width:980px){.layout{grid-template-columns:1fr}.side{position:relative;height:auto}.cards{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <div class="brand">Publisher CMS</div>
+    <nav class="nav">
+      <a href="/publisher/" class="active">总览</a>
+      <a href="/publisher/create.html">新建发布</a>
+      <a href="/publisher/manage.html">内容管理</a>
+      <a href="/publisher/media-upload.html">Media Upload</a>
+      <a href="/publisher/template-manage.html">模板管理</a>
+    </nav>
+  </aside>
+  <main class="main">
+    <section class="top"><h1 style="margin:0 0 6px">内容中心</h1><div style="color:#637282;font-size:13px">选择操作入口开始管理你的内容。</div></section>
+    <section class="cards">
+      <article class="card"><h2>新建发布</h2><p>按 archetypes 模板创建新文章，支持 featured 图与实时 Markdown 预览。</p><a class="btn" href="/publisher/create.html">进入发布页</a></article>
+      <article class="card"><h2>内容管理</h2><p>浏览现有内容、单列/多列切换、编辑或删除文章。</p><a class="btn" href="/publisher/manage.html">进入管理页</a></article>
+      <article class="card"><h2>Media Upload</h2><p>嵌入原始富文本 Media 自动上传 OSS 工具，保留原页面和能力。</p><a class="btn" href="/publisher/media-upload.html">进入工具页</a></article>
+      <article class="card"><h2>模板管理</h2><p>新建或修改 `archetypes/*.md`，保存后自动更新发布页可识别的模板。</p><a class="btn" href="/publisher/template-manage.html">进入模板页</a></article>
+    </section>
+  </main>
+</div>
+</body>
 </html>
