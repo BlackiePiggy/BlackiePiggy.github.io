@@ -11,6 +11,11 @@ const PASSWORD = process.env.LOCAL_PUBLISH_PASSWORD || "dev123456";
 const CORS_ORIGIN = process.env.LOCAL_PUBLISH_CORS_ORIGIN || "*";
 const MEDIA_TOOL_DIR = path.join(ROOT, "markdown_media_upload", "public");
 const ARCHETYPES_DIR = path.join(ROOT, "archetypes");
+const AUTHOR_PROFILE_PATH = path.join(ROOT, "content", "authors", "admin", "_index.md");
+const EXPERIENCE_PAGE_PATH = path.join(ROOT, "content", "experience.md");
+const HOME_PAGE_PATH = path.join(ROOT, "content", "_index.md");
+const AUTHOR_DIR = path.join(ROOT, "content", "authors", "admin");
+const ASSETS_MEDIA_DIR = path.join(ROOT, "assets", "media");
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -171,6 +176,12 @@ function buildMarkdown(frontmatter, body) {
 
 function ensureDir(p) {
   if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
+}
+
+function sanitizeFileName(name, fallback = "file.bin") {
+  const raw = String(name || "").trim().replace(/[\\/:*?"<>|]+/g, "-");
+  const normalized = raw.replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  return normalized || fallback;
 }
 
 function templateFilePath(name) {
@@ -465,6 +476,144 @@ function parseMarkdown(mdText) {
   return { frontmatter: fm, body };
 }
 
+function readFrontMatterFile(filePath) {
+  const text = fs.readFileSync(filePath, "utf8");
+  return parseMarkdown(text);
+}
+
+function writeFrontMatterFile(filePath, frontmatter, body = "") {
+  const fmText = yaml.dump(frontmatter || {}, {
+    lineWidth: -1,
+    noRefs: true,
+    quotingType: '"',
+    forceQuotes: false,
+  });
+  const hasBody = String(body || "").trim() !== "";
+  const output = hasBody ? `---\n${fmText}---\n\n${String(body || "").replace(/^\s+/, "")}\n` : `---\n${fmText}---\n`;
+  fs.writeFileSync(filePath, output, "utf8");
+}
+
+function findFirstMatchingFile(dir, baseName) {
+  if (!fs.existsSync(dir)) return "";
+  const entries = fs.readdirSync(dir).sort();
+  const match = entries.find((name) => name === baseName || name.startsWith(`${baseName}.`));
+  return match ? path.join(dir, match) : "";
+}
+
+function normalizeProfileLang(lang) {
+  return String(lang || "").toLowerCase().startsWith("zh") ? "zh" : "en";
+}
+
+function localizedContentPath(basePath, lang) {
+  const normalizedLang = normalizeProfileLang(lang);
+  if (normalizedLang === "en") return basePath;
+  return basePath.replace(/\.md$/, `.${normalizedLang}.md`);
+}
+
+function getHomeHeroSection(frontmatter) {
+  const sections = Array.isArray(frontmatter?.sections) ? frontmatter.sections : [];
+  return sections.find((section) => section?.block === "resume-biography-3") || null;
+}
+
+function applyBackgroundFile(frontmatter, backgroundFile) {
+  if (!backgroundFile) return;
+  const hero = getHomeHeroSection(frontmatter);
+  if (!hero) return;
+  hero.design = hero.design || {};
+  hero.design.background = hero.design.background || {};
+  hero.design.background.image = hero.design.background.image || {};
+  hero.design.background.image.filename = backgroundFile;
+}
+
+function loadSiteProfile(lang = "en") {
+  const normalizedLang = normalizeProfileLang(lang);
+  const authorPath = localizedContentPath(AUTHOR_PROFILE_PATH, normalizedLang);
+  const homePath = localizedContentPath(HOME_PAGE_PATH, normalizedLang);
+  const experiencePath = localizedContentPath(EXPERIENCE_PAGE_PATH, normalizedLang);
+  const author = readFrontMatterFile(authorPath);
+  const home = readFrontMatterFile(homePath);
+  const experience = readFrontMatterFile(experiencePath);
+  const avatarPath = findFirstMatchingFile(AUTHOR_DIR, "avatar");
+  const hero = getHomeHeroSection(home.frontmatter);
+  const bgName = hero?.design?.background?.image?.filename || "";
+  const backgroundPath = bgName ? path.join(ASSETS_MEDIA_DIR, bgName) : "";
+
+  return {
+    lang: normalizedLang,
+    authorFrontmatter: author.frontmatter,
+    authorBody: author.body || "",
+    homeFrontmatter: home.frontmatter,
+    experienceFrontmatter: experience.frontmatter,
+    assets: {
+      avatarFile: avatarPath ? path.basename(avatarPath) : "",
+      backgroundFile: bgName,
+      hasAvatar: Boolean(avatarPath),
+      hasBackground: Boolean(bgName && fs.existsSync(backgroundPath)),
+    },
+    paths: {
+      authorPath: path.relative(ROOT, authorPath).replace(/\\/g, "/"),
+      homePath: path.relative(ROOT, homePath).replace(/\\/g, "/"),
+      experiencePath: path.relative(ROOT, experiencePath).replace(/\\/g, "/"),
+    },
+  };
+}
+
+function replaceBinaryAsset(dir, baseName, upload) {
+  if (!upload?.base64 || !upload?.mimeType) return "";
+  ensureDir(dir);
+  const ext = (String(upload.mimeType).split("/")[1] || "bin").replace(/[^a-z0-9]+/gi, "").toLowerCase() || "bin";
+  const fileName = sanitizeFileName(`${baseName}.${ext}`, `${baseName}.bin`);
+  for (const entry of fs.readdirSync(dir)) {
+    if (entry === baseName || entry.startsWith(`${baseName}.`)) {
+      fs.rmSync(path.join(dir, entry), { force: true });
+    }
+  }
+  const filePath = path.join(dir, fileName);
+  fs.writeFileSync(filePath, Buffer.from(upload.base64, "base64"));
+  return fileName;
+}
+
+function saveSiteProfile(payload, lang = "en") {
+  const normalizedLang = normalizeProfileLang(lang);
+  const authorPath = localizedContentPath(AUTHOR_PROFILE_PATH, normalizedLang);
+  const homePath = localizedContentPath(HOME_PAGE_PATH, normalizedLang);
+  const experiencePath = localizedContentPath(EXPERIENCE_PAGE_PATH, normalizedLang);
+  const authorFrontmatter = payload?.authorFrontmatter || {};
+  const authorBody = String(payload?.authorBody || "");
+  const homeFrontmatter = payload?.homeFrontmatter || {};
+  const experienceFrontmatter = payload?.experienceFrontmatter || {};
+
+  const avatarFile = replaceBinaryAsset(AUTHOR_DIR, "avatar", payload?.avatarUpload);
+  const backgroundFile = payload?.backgroundUpload ? replaceBinaryAsset(ASSETS_MEDIA_DIR, "home-hero-bg", payload.backgroundUpload) : "";
+
+  if (backgroundFile) {
+    applyBackgroundFile(homeFrontmatter, backgroundFile);
+    const siblingLang = normalizedLang === "en" ? "zh" : "en";
+    const siblingHomePath = localizedContentPath(HOME_PAGE_PATH, siblingLang);
+    if (fs.existsSync(siblingHomePath)) {
+      const siblingHome = readFrontMatterFile(siblingHomePath);
+      applyBackgroundFile(siblingHome.frontmatter, backgroundFile);
+      writeFrontMatterFile(siblingHomePath, siblingHome.frontmatter, siblingHome.body || "");
+    }
+  }
+
+  writeFrontMatterFile(authorPath, authorFrontmatter, authorBody);
+  writeFrontMatterFile(homePath, homeFrontmatter, "");
+  writeFrontMatterFile(experiencePath, experienceFrontmatter, "");
+
+  return {
+    ok: true,
+    saved: {
+      lang: normalizedLang,
+      authorPath: path.relative(ROOT, authorPath).replace(/\\/g, "/"),
+      homePath: path.relative(ROOT, homePath).replace(/\\/g, "/"),
+      experiencePath: path.relative(ROOT, experiencePath).replace(/\\/g, "/"),
+      avatarFile,
+      backgroundFile,
+    },
+  };
+}
+
 function listItemsByTemplate(template) {
   const base = path.join(ROOT, "content", template);
   if (!fs.existsSync(base)) return [];
@@ -576,11 +725,45 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  if (req.method === "GET" && u.pathname === "/site-profile") {
+    try {
+      const lang = normalizeProfileLang(u.searchParams.get("lang"));
+      return send(res, 200, { ok: true, profile: loadSiteProfile(lang) });
+    } catch (err) {
+      return send(res, 500, { error: err.message || String(err) });
+    }
+  }
+
+  if (req.method === "GET" && u.pathname === "/site-profile/asset") {
+    try {
+      const kind = String(u.searchParams.get("kind") || "");
+      let filePath = "";
+      if (kind === "avatar") {
+        filePath = findFirstMatchingFile(AUTHOR_DIR, "avatar");
+      } else if (kind === "background") {
+        const profile = loadSiteProfile(normalizeProfileLang(u.searchParams.get("lang")));
+        if (profile.assets.backgroundFile) filePath = path.join(ASSETS_MEDIA_DIR, profile.assets.backgroundFile);
+      } else {
+        return send(res, 400, { error: "kind 无效" });
+      }
+      if (!filePath || !fs.existsSync(filePath)) return sendText(res, 404, "Not Found");
+      const ext = path.extname(filePath).toLowerCase();
+      res.writeHead(200, {
+        "Content-Type": MIME_TYPES[ext] || "application/octet-stream",
+        "Access-Control-Allow-Origin": CORS_ORIGIN,
+      });
+      return res.end(fs.readFileSync(filePath));
+    } catch (err) {
+      return send(res, 500, { error: err.message || String(err) });
+    }
+  }
+
   if (req.method !== "POST" || (
     u.pathname !== "/publish" &&
     u.pathname !== "/update" &&
     u.pathname !== "/delete" &&
     u.pathname !== "/template-file" &&
+    u.pathname !== "/site-profile" &&
     u.pathname !== "/api/oss/test" &&
     u.pathname !== "/api/media/replace" &&
     u.pathname !== "/api/media/upload-one"
@@ -617,6 +800,12 @@ const server = http.createServer((req, res) => {
             path: path.relative(ROOT, filePath).replace(/\\/g, "/"),
           },
         });
+      }
+
+      if (u.pathname === "/site-profile") {
+        if (payload.password !== PASSWORD) return send(res, 401, { error: "密码错误" });
+        const result = saveSiteProfile(payload, payload.lang);
+        return send(res, 200, result);
       }
 
       if (payload.password !== PASSWORD) return send(res, 401, { error: "密码错误" });

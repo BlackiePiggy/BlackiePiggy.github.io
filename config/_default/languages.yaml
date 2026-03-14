@@ -8,15 +8,38 @@ en:
   # Uncomment for multi-lingual sites, and move English content into `en` sub-folder.
   #contentDir: content/en
 
-# Uncomment the lines below to configure your website in a second language.
-#zh:
-#  languageCode: zh-Hans
-#  contentDir: content/zh
-#  title: Chinese website title...
-#  params:
-#    description: Site description in Chinese...
-#  menu:
-#    main:
-#      - name: 传
-#        url: '#about'
-#        weight: 1
+zh:
+  languageCode: zh-Hans
+  title: 李嘉渝 | BlackiePiggy
+  params:
+    description: 李嘉渝的个人主页与经历展示
+  menu:
+    main:
+      - name: 主页
+        identifier: 46a9df65
+        url: /
+        weight: 10
+      - name: 论文
+        identifier: f31c7d6c
+        url: /#papers
+        weight: 20
+      - name: 项目
+        identifier: d10d5827
+        url: /projects/
+        weight: 30
+      - name: 经历
+        identifier: 6334c278
+        url: /experience/
+        weight: 40
+      - name: 动态
+        identifier: 7a7afbbd
+        url: /#news
+        weight: 50
+      - name: 生活
+        identifier: c0853a40
+        url: /#talks
+        weight: 60
+      - name: 想法
+        identifier: idea
+        url: /idea/
+        weight: 70

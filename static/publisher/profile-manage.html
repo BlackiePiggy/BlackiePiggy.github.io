@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BlackiePiggy CMS | 主页资料</title>
+  <link rel="icon" type="image/svg+xml" href="/publisher/favicon.svg" />
+  <style>
+    :root{--bg:#eef2f7;--panel:#fff;--line:#d7dee7;--text:#15202b;--muted:#637282;--brand:#0f766e;--brand2:#1e9b86;--danger:#b91c1c;--chip:#e7f6f2}
+    *{box-sizing:border-box} body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text)}
+    .layout{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+    .side{position:sticky;top:0;height:100vh;overflow-y:auto;background:linear-gradient(160deg,#0d3e39,#0b2e32);color:#dff7f4;padding:20px}
+    .brand{font-size:20px;font-weight:700;margin-bottom:20px}
+    .nav a{display:block;color:#dff7f4;text-decoration:none;padding:10px 12px;border-radius:10px;margin-bottom:6px}
+    .nav a.active,.nav a:hover{background:rgba(255,255,255,.14)}
+    .main{padding:18px}
+    .top,.panel,.media-card,.editor-card{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+    .top{padding:16px 18px;margin-bottom:14px}
+    .top h1{margin:0 0 6px}
+    .muted{color:var(--muted);font-size:13px}
+    .panel{padding:14px;margin-bottom:12px}
+    .toolbar{display:grid;grid-template-columns:1.4fr 1fr auto auto;gap:10px;align-items:end}
+    .field label,.editor-card>h3,.media-card>h3{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+    .dual-wrap{display:grid;gap:8px}
+    .dual-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .lang-pane{display:grid;gap:6px}
+    .lang-head{font-size:11px;font-weight:700;letter-spacing:.08em;color:#58707f}
+    input,textarea,select,button{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;background:#fff}
+    textarea{min-height:160px;resize:vertical}
+    button{cursor:pointer}
+    .btn{border:none;background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff}
+    .btn-ghost{background:#fff;color:var(--text)}
+    .status{margin-top:10px;white-space:pre-wrap;font-size:13px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .chip{padding:4px 10px;border-radius:999px;background:var(--chip);color:#0f5a42;font-size:12px}
+    .media-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    .media-card{padding:14px}
+    .preview{height:180px;border:1px dashed var(--line);border-radius:12px;background:linear-gradient(135deg,#f7fafc,#edf3f8);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:10px}
+    .preview.dropzone{cursor:pointer;transition:border-color .18s ease,background .18s ease,transform .18s ease}
+    .preview.dropzone.dragover{border-color:#0f766e;background:linear-gradient(135deg,#ecfbf6,#e1f3ee);transform:translateY(-1px)}
+    .preview img{width:100%;height:100%;object-fit:cover}
+    .preview.empty{color:var(--muted);font-size:13px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    .tab{width:auto;padding:10px 14px;border-radius:999px;background:#fff}
+    .tab.active{border-color:#0f766e;background:#eaf7f3;color:#0f5a42}
+    .tab-panel{display:none}
+    .tab-panel.active{display:block}
+    .editor-grid{display:grid;grid-template-columns:1fr;gap:12px}
+    .editor-card{padding:14px}
+    .editor-card h3{font-size:14px;color:var(--text);margin-bottom:12px}
+    .group{border:1px dashed var(--line);border-radius:12px;padding:12px;background:#fbfdff}
+    .group + .group{margin-top:10px}
+    .group-title{font-weight:600;margin:0 0 10px}
+    .obj{border:1px dashed var(--line);border-radius:12px;padding:12px;background:#fff}
+    .obj + .obj{margin-top:10px}
+    .array-items{display:grid;gap:10px}
+    .item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .mini-btn{width:auto;padding:8px 12px}
+    .add-row{margin-top:10px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .note{font-size:12px;color:var(--muted)}
+    .icon-picker-wrap{display:grid;gap:10px}
+    .icon-current{margin-bottom:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fbfdff;color:var(--muted);font-size:13px}
+    .icon-current strong{display:inline-block;min-width:24px;text-align:center;font-size:20px;color:var(--text);margin-right:8px}
+    .icon-toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .scene-toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .scene-chip{width:auto;padding:8px 12px;border-radius:999px;background:#fff}
+    .scene-chip.active{border-color:#0f766e;background:#eaf7f3;color:#0f5a42}
+    .scene-panel{border:1px solid var(--line);border-radius:12px;background:#fbfdff;padding:12px}
+    .scene-title{font-size:13px;color:var(--muted);margin-bottom:8px}
+    .scene-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:8px}
+    .scene-emoji{display:flex;align-items:center;justify-content:center;height:48px;padding:0;font-size:22px;border-radius:12px}
+    .scene-emoji.active{border-color:#0f766e;background:#eaf7f3;box-shadow:inset 0 0 0 1px rgba(15,118,110,.18)}
+    .emoji-picker-shell{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;min-height:420px}
+    emoji-picker{width:100%;height:420px;--background:#fff;--border-color:#d7dee7;--button-hover-background:#eaf7f3;--button-active-background:#dff2ec;--category-emoji-padding:12px;--emoji-padding:10px;--indicator-color:#0f766e;--input-border-color:#d7dee7;--input-font-color:#15202b;--input-placeholder-color:#637282;--outline-color:#0f766e;--shadow:none}
+    .mask{position:fixed;inset:0;background:rgba(10,22,33,.45);display:none;align-items:center;justify-content:center;padding:12px;z-index:10000}
+    .mask.open{display:flex}
+    .modal{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 18px 40px rgba(10,22,33,.16)}
+    .modal h3{margin:0 0 8px}
+    .modal p{margin:0;color:#44535f;font-size:14px;line-height:1.6}
+    .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+    .toast-stack{position:fixed;right:18px;top:18px;display:flex;flex-direction:column;gap:10px;z-index:9999;pointer-events:none}
+    .toast{min-width:220px;max-width:360px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--text);box-shadow:0 12px 30px rgba(21,32,43,.12);opacity:0;transform:translateY(8px);animation:toast-in .18s ease forwards}
+    .toast.ok{border-color:#b7e4d7;background:#effaf5;color:#065f46}.toast.err{border-color:#efb6b6;background:#fff5f5;color:#b91c1c}
+    .toast.fade-out{animation:toast-out .22s ease forwards}
+    @keyframes toast-in{to{opacity:1;transform:translateY(0)}}
+    @keyframes toast-out{to{opacity:0;transform:translateY(8px)}}
+    @media (max-width:1100px){.toolbar{grid-template-columns:1fr 1fr}.media-grid,.grid2{grid-template-columns:1fr}}
+    @media (max-width:980px){.layout{grid-template-columns:1fr}.side{position:relative;height:auto;padding:14px}.toolbar{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <div class="brand">Publisher CMS</div>
+    <nav class="nav">
+      <a href="/publisher/">总览</a>
+      <a href="/publisher/profile-manage.html" class="active">主页资料</a>
+      <a href="/publisher/create.html">新建发布</a>
+      <a href="/publisher/manage.html">内容管理</a>
+      <a href="/publisher/media-upload.html">Media Upload</a>
+      <a href="/publisher/template-manage.html">模板管理</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <section class="top">
+      <h1>主页资料维护</h1>
+      <div class="muted">统一维护主页 Bio、头像、背景图、About Me、履历内容，以及 Experience 页面用到的显示配置。保存后会直接写回站点源文件。</div>
+      <div class="chips">
+        <span class="chip">读取 `content/authors/admin/_index.md`</span>
+        <span class="chip">读取 `content/authors/admin/_index.zh.md`</span>
+        <span class="chip">读取 `content/_index.md`</span>
+        <span class="chip">读取 `content/_index.zh.md`</span>
+        <span class="chip">读取 `content/experience.md`</span>
+        <span class="chip">读取 `content/experience.zh.md`</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="toolbar">
+        <div class="field"><label>API 地址</label><input id="apiBase" /></div>
+        <div class="field"><label>密码</label><input id="password" type="password" /></div>
+        <button id="reloadBtn" class="btn-ghost" type="button">重新读取</button>
+        <button id="saveBtn" class="btn" type="button">保存全部修改</button>
+      </div>
+      <div class="note">当前页面会并排展示 EN / CH 两套可编辑内容，方便你直接对照维护。图片与状态 icon 仍然共用同一套资源。</div>
+      <div id="status" class="status"></div>
+    </section>
+
+    <section class="media-grid">
+      <div class="media-card">
+        <h3>主页头像</h3>
+        <div id="avatarPreview" class="preview empty dropzone">拖拽图片到这里，或使用下方文件选择</div>
+        <div class="note" style="margin:-2px 0 10px">支持把图片直接拖动到上方区域松开完成上传准备，保存后才会真正替换。</div>
+        <input id="avatarFile" type="file" accept="image/*" />
+        <div id="avatarMeta" class="note" style="margin-top:8px"></div>
+      </div>
+      <div class="media-card">
+        <h3>主页背景图</h3>
+        <div id="backgroundPreview" class="preview empty dropzone">拖拽图片到这里，或使用下方文件选择</div>
+        <div class="note" style="margin:-2px 0 10px">支持把图片直接拖动到上方区域松开完成上传准备，保存后才会真正替换。</div>
+        <input id="backgroundFile" type="file" accept="image/*" />
+        <div id="backgroundMeta" class="note" style="margin-top:8px"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="tabs">
+        <button class="tab active" data-tab="profile" type="button">个人资料</button>
+        <button class="tab" data-tab="resume" type="button">履历内容</button>
+        <button class="tab" data-tab="pages" type="button">首页与 Experience</button>
+      </div>
+
+      <div id="tab-profile" class="tab-panel active">
+        <div class="editor-grid">
+          <div class="editor-card">
+            <h3>作者资料</h3>
+            <div id="authorRoot"></div>
+          </div>
+          <div class="editor-card">
+            <h3>About Me</h3>
+            <label class="note" for="aboutMe">对应 `content/authors/admin/_index.md` 的正文</label>
+            <textarea id="aboutMe" placeholder="这里维护主页 About Me 文本"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-resume" class="tab-panel">
+        <div class="editor-grid">
+          <div class="editor-card">
+            <h3>教育 / 工作 / 技能 / 语言 / 奖项</h3>
+            <div id="resumeRoot"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-pages" class="tab-panel">
+        <div class="editor-grid">
+          <div class="editor-card">
+            <h3>首页 Bio 与区块文案</h3>
+            <div id="homeRoot"></div>
+          </div>
+          <div class="editor-card">
+            <h3>Experience 页面配置</h3>
+            <div id="experienceRoot"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="confirmMask" class="mask">
+  <div class="modal">
+    <h3 id="confirmTitle">确认操作</h3>
+    <p id="confirmMessage"></p>
+    <div class="modal-actions">
+      <button id="confirmCancel" class="btn-ghost mini-btn" type="button">取消</button>
+      <button id="confirmOk" class="btn mini-btn" type="button">确定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const local = ["localhost", "127.0.0.1"].includes(location.hostname);
+const apiBaseInput = document.getElementById("apiBase");
+const passwordInput = document.getElementById("password");
+const reloadBtnEl = document.getElementById("reloadBtn");
+const saveBtnEl = document.getElementById("saveBtn");
+const statusEl = document.getElementById("status");
+const authorRootEl = document.getElementById("authorRoot");
+const resumeRootEl = document.getElementById("resumeRoot");
+const homeRootEl = document.getElementById("homeRoot");
+const experienceRootEl = document.getElementById("experienceRoot");
+const aboutMeEl = document.getElementById("aboutMe");
+const avatarFileEl = document.getElementById("avatarFile");
+const backgroundFileEl = document.getElementById("backgroundFile");
+const avatarPreviewEl = document.getElementById("avatarPreview");
+const backgroundPreviewEl = document.getElementById("backgroundPreview");
+const avatarMetaEl = document.getElementById("avatarMeta");
+const backgroundMetaEl = document.getElementById("backgroundMeta");
+const confirmMaskEl = document.getElementById("confirmMask");
+const confirmTitleEl = document.getElementById("confirmTitle");
+const confirmMessageEl = document.getElementById("confirmMessage");
+const confirmCancelEl = document.getElementById("confirmCancel");
+const confirmOkEl = document.getElementById("confirmOk");
+const tabs = [...document.querySelectorAll(".tab")];
+const tabPanels = [...document.querySelectorAll(".tab-panel")];
+const toastStackEl = document.body.appendChild(document.createElement("div"));
+toastStackEl.className = "toast-stack";
+apiBaseInput.value = localStorage.getItem("publisher_api_base") || (local ? "http://127.0.0.1:8790" : "");
+passwordInput.value = localStorage.getItem("publisher_password") || (local ? "123456" : "");
+
+const labelMap = {
+  title: "标题",
+  name_pronunciation: "姓名发音",
+  first_name: "名",
+  last_name: "姓",
+  pronouns: "代词",
+  role: "身份 / Tagline",
+  superuser: "主用户",
+  highlight_name: "列表中高亮姓名",
+  status: "状态",
+  icon: "图标 / Icon",
+  organizations: "组织与机构",
+  profiles: "社交链接",
+  interests: "研究兴趣",
+  education: "教育经历",
+  work: "工作经历",
+  skills: "技能分组",
+  languages: "语言能力",
+  awards: "奖项",
+  name: "名称",
+  url: "链接",
+  label: "标签",
+  area: "专业 / 方向",
+  institution: "学校 / 机构",
+  date_start: "开始日期",
+  date_end: "结束日期",
+  summary: "说明 / 摘要",
+  position: "职位",
+  company_name: "公司与地点",
+  company_url: "公司链接",
+  company_logo: "公司 Logo",
+  items: "条目",
+  description: "描述",
+  percent: "百分比",
+  color: "颜色",
+  color_border: "边框颜色",
+  awarder: "颁发方",
+  certificate_url: "证书链接",
+  date: "日期",
+  design: "设计",
+  spacing: "间距",
+  sections: "区块",
+  hero: "Hero 区块",
+  papers: "Featured Publications",
+  recent: "Recent Publications",
+  projects: "Projects",
+  talks: "Presentations",
+  news: "More About Me",
+  cta: "底部 CTA",
+  content: "内容",
+  text: "文本",
+  button: "按钮",
+  username: "作者用户名",
+  css_class: "CSS 类",
+  avatar: "头像样式",
+  size: "尺寸",
+  shape: "形状",
+  background: "背景",
+  image: "背景图片",
+  filename: "文件名",
+  filters: "滤镜",
+  brightness: "亮度",
+  position: "位置",
+  parallax: "视差",
+  subtitle: "副标题",
+  count: "数量",
+  order: "排序",
+  page_type: "页面类型",
+  offset: "偏移",
+  view: "展示方式",
+  columns: "列数",
+  id: "区块 ID",
+  block: "区块类型",
+  page: "页面",
+  type: "页面类型",
+  is_education_first: "教育优先显示",
+  date_format: "日期格式",
+  show_skill_percentage: "显示技能百分比",
+};
+
+const arrayDefaults = {
+  "organizations[]": { name: "", url: "" },
+  "profiles[]": { icon: "", url: "", label: "" },
+  "interests[]": "",
+  "education[]": { area: "", institution: "", date_start: "", date_end: "", summary: "" },
+  "work[]": { position: "", company_name: "", company_url: "", company_logo: "", date_start: "", date_end: "", summary: "" },
+  "skills[]": { name: "", color: "", color_border: "", items: [{ name: "", description: "", percent: 0, icon: "" }] },
+  "skills[].items[]": { name: "", description: "", percent: 0, icon: "" },
+  "languages[]": { name: "", percent: 0 },
+  "awards[]": { title: "", url: "", certificate_url: "", date: "", awarder: "", icon: "", summary: "" },
+  "papers.content.filters.folders[]": "",
+  "recent.content.filters.folders[]": "",
+  "projects.content.filters.folders[]": "",
+  "talks.content.filters.folders[]": "",
+};
+
+const state = {
+  rawProfiles: { en: null, zh: null },
+  authorEditable: { en: null, zh: null },
+  resumeEditable: { en: null, zh: null },
+  homeEditable: { en: null, zh: null },
+  experienceEditable: { en: null, zh: null },
+  avatarUpload: null,
+  backgroundUpload: null,
+  confirmResolve: null,
+};
+let emojiPickerReadyPromise = null;
+const STATUS_SCENES = [
+  { id: "work", label: "工作", emojis: ["💼","🧑‍💼","📅","🤝","📌","🗂️","✅","📈","🏢","🪪","📋","⌛","📎","🧾","🗃️","🛎️","📤","📥"] },
+  { id: "academic", label: "学术", emojis: ["🧑‍🔬","🔬","🧪","🛰️","🧭","📚","📝","🎓","📖","🧠","📐","📡","🗒️","📘","📙","🧬","🔭","🧮"] },
+  { id: "life", label: "生活", emojis: ["🌿","☕","🍜","🏠","🛋️","🧺","🧘","🌤️","🫖","🍃","🪴","🫧","🛁","🕯️","🪟","🥐","🍵","🫶"] },
+  { id: "travel", label: "旅行", emojis: ["✈️","🚄","🧳","🗺️","🏝️","🏔️","🚗","📍","🌍","🛶","🏕️","🎒","🚇","🚉","🛫","🛬","🗼","🧭"] },
+  { id: "mood", label: "情绪", emojis: ["🙂","😄","🥳","😌","🤔","😭","😎","🥹","🤯","😴","😤","🫠","😊","😇","🙃","😶‍🌫️","🥺","🤩"] },
+  { id: "pet", label: "宠物", emojis: ["🐱","🐈","🐾","🦴","🐶","🐹","🐰","🧶","🛏️","🐕","😺","🐈‍⬛","🐕‍🦺","🪮","🦮","🐟","🪺","🧸"] },
+  { id: "tech", label: "科技", emojis: ["💻","🖥️","⌨️","🖱️","📱","🤖","🛠️","⚙️","🔋","🧰","🧑‍💻","🌐","🖨️","🧲","💾","🛰️","🔌","🛜"] },
+  { id: "music", label: "音乐", emojis: ["🎵","🎶","🎧","🎤","🎹","🎸","🥁","🎼","🎚️","📻","🪕","🎷","🎻","🪘","🎺","🎛️","🎙️","📀"] },
+  { id: "photo", label: "摄影", emojis: ["📷","📸","🎞️","🖼️","🌆","🌄","🔍","💡","🎬","📹","🪄","🌇","🧿","🕶️","📽️","🎥","🌅","🪟"] },
+  { id: "sport", label: "运动", emojis: ["🏃","🏃‍♂️","🏃‍♀️","⚽","🏀","🏐","🎾","🏸","🏓","🏊","🚴","🏋️","⛹️","🤸","🥾","🧗","⛷️","🏂"] },
+  { id: "game", label: "游戏", emojis: ["🎮","🕹️","👾","🎯","♟️","🃏","🎲","🧩","🪄","🏆","🥇","🚩","🎪","🧠","🎰","🪀","🎳","🎟️"] },
+  { id: "food", label: "美食", emojis: ["🍜","🍣","🍛","🍱","☕","🍵","🍰","🍪","🥐","🍕","🍔","🍟","🍇","🍓","🍋","🥂","🍺","🍨"] },
+  { id: "nature", label: "自然", emojis: ["🌿","🍀","🌱","🌲","🌳","🌻","🌊","⛰️","🌙","⭐","☀️","🌈","🔥","❄️","🌧️","⛅","🌸","🪐"] },
+];
+
+function showToast(message, isError = false) {
+  if (!message) return;
+  const toast = document.createElement("div");
+  toast.className = `toast ${isError ? "err" : "ok"}`;
+  toast.textContent = message;
+  toastStackEl.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add("fade-out");
+    setTimeout(() => toast.remove(), 220);
+  }, 1800);
+}
+
+function st(message, isError = false, notify = false) {
+  statusEl.style.color = isError ? "#b91c1c" : "#065f46";
+  statusEl.textContent = message || "";
+  if (notify) showToast(String(message || "").split("\n")[0], isError);
+}
+
+function askConfirm(message, title = "确认操作") {
+  confirmTitleEl.textContent = title;
+  confirmMessageEl.textContent = message;
+  confirmMaskEl.classList.add("open");
+  return new Promise((resolve) => {
+    state.confirmResolve = resolve;
+  });
+}
+
+function ensureEmojiPickerReady() {
+  if (customElements.get("emoji-picker")) return Promise.resolve();
+  if (emojiPickerReadyPromise) return emojiPickerReadyPromise;
+  emojiPickerReadyPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.type = "module";
+    script.src = "https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Emoji 选择器组件加载失败"));
+    document.head.appendChild(script);
+  });
+  return emojiPickerReadyPromise;
+}
+
+function enhanceEmojiPicker(picker) {
+  if (!picker || !picker.shadowRoot) return;
+  if (picker.shadowRoot.getElementById("profile-manage-emoji-overrides")) return;
+  const style = document.createElement("style");
+  style.id = "profile-manage-emoji-overrides";
+  style.textContent = `
+    .skintone-button-wrapper,
+    .skintone-list,
+    .favorites,
+    .indicator-wrapper {
+      display: none !important;
+    }
+    .search-row {
+      padding-inline-end: var(--emoji-padding) !important;
+    }
+    .nav {
+      display: flex !important;
+      justify-content: flex-start !important;
+      gap: 4px;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      padding: 0 8px 6px;
+      scroll-behavior: smooth;
+      scrollbar-width: thin;
+    }
+    .nav::-webkit-scrollbar {
+      height: 6px;
+    }
+    .nav::-webkit-scrollbar-thumb {
+      background: rgba(15,118,110,.28);
+      border-radius: 999px;
+    }
+    .nav-button {
+      flex: 0 0 auto !important;
+      min-width: calc(var(--total-category-emoji-size) + 6px);
+    }
+  `;
+  picker.shadowRoot.appendChild(style);
+}
+
+function closeConfirm(result) {
+  confirmMaskEl.classList.remove("open");
+  if (typeof state.confirmResolve === "function") state.confirmResolve(Boolean(result));
+  state.confirmResolve = null;
+}
+
+function base() {
+  return apiBaseInput.value.replace(/\/+$/, "");
+}
+
+function api(path) {
+  return `${base()}${path}`;
+}
+
+function clone(v) {
+  return JSON.parse(JSON.stringify(v));
+}
+
+function escapeHtml(s) {
+  return String(s || "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[m]));
+}
+
+function normalizeArrayPath(path) {
+  return path.replace(/\[\d+\]/g, "[]");
+}
+
+function humanize(key) {
+  return labelMap[key] || key.replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function mergeDefaults(value, defaults) {
+  if (Array.isArray(defaults)) {
+    if (Array.isArray(value)) return value.map((item, idx) => mergeDefaults(item, defaults[Math.min(idx, defaults.length - 1)]));
+    return clone(defaults);
+  }
+  if (defaults && typeof defaults === "object") {
+    const source = value && typeof value === "object" ? value : {};
+    const out = clone(source);
+    for (const [key, val] of Object.entries(defaults)) {
+      out[key] = key in source ? mergeDefaults(source[key], val) : clone(val);
+    }
+    return out;
+  }
+  return value === undefined ? defaults : value;
+}
+
+function setByPath(obj, path, value) {
+  const parts = path.replace(/\[(\d+)\]/g, ".$1").split(".");
+  let cur = obj;
+  parts.forEach((part, index) => {
+    if (index === parts.length - 1) {
+      cur[part] = value;
+      return;
+    }
+    if (cur[part] == null) cur[part] = /^\d+$/.test(parts[index + 1]) ? [] : {};
+    cur = cur[part];
+  });
+}
+
+function getByPath(obj, path) {
+  return path.replace(/\[(\d+)\]/g, ".$1").split(".").reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);
+}
+
+function ensureArrayPaths(rootEl, out) {
+  rootEl.querySelectorAll("[data-array-path]").forEach((node) => {
+    const path = node.dataset.arrayPath;
+    if (getByPath(out, path) === undefined) setByPath(out, path, []);
+  });
+}
+
+function collectRoot(rootEl) {
+  const out = {};
+  rootEl.querySelectorAll("[data-path]").forEach((field) => {
+    const path = field.dataset.path;
+    let value;
+    if (field.type === "checkbox") value = field.checked;
+    else if (field.type === "number") value = field.value === "" ? 0 : Number(field.value);
+    else value = field.value;
+    setByPath(out, path, value);
+  });
+  ensureArrayPaths(rootEl, out);
+  return out;
+}
+
+function collectRootDual(rootEl) {
+  const out = { en: {}, zh: {} };
+  rootEl.querySelectorAll("[data-path][data-lang]").forEach((field) => {
+    const path = field.dataset.path;
+    const lang = field.dataset.lang === "zh" ? "zh" : "en";
+    let value;
+    if (field.type === "checkbox") value = field.checked;
+    else if (field.type === "number") value = field.value === "" ? 0 : Number(field.value);
+    else value = field.value;
+    setByPath(out[lang], path, value);
+  });
+  rootEl.querySelectorAll("[data-array-path]").forEach((node) => {
+    const path = node.dataset.arrayPath;
+    if (getByPath(out.en, path) === undefined) setByPath(out.en, path, []);
+    if (getByPath(out.zh, path) === undefined) setByPath(out.zh, path, []);
+  });
+  return out;
+}
+
+function inferFieldMode(key, value) {
+  if (value instanceof Date) return "date";
+  if (typeof value === "boolean") return "checkbox";
+  if (typeof value === "number") return "number";
+  if (typeof value === "string" && /(^date$|date$|_at$|date_start$|date_end$)/i.test(key)) return "date";
+  if (typeof value === "string" && (key === "summary" || key === "text" || key === "description" || key === "content" || key === "body" || key === "company_logo")) return value.length > 120 || key !== "description" ? "textarea" : "text";
+  if (typeof value === "string" && value.length > 100) return "textarea";
+  return "text";
+}
+
+function normalizeDateInputValue(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString().slice(0, 10);
+  const str = value == null ? "" : String(value);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  if (/^\d{4}-\d{2}-\d{2}T/.test(str)) return str.slice(0, 10);
+  return "";
+}
+
+function renderStatusIconPicker(path, value) {
+  const wrap = document.createElement("div");
+  wrap.className = "field";
+  const label = document.createElement("label");
+  label.textContent = "状态 Icon";
+  wrap.appendChild(label);
+
+  const current = document.createElement("div");
+  current.className = "icon-current";
+  const hiddenEn = document.createElement("input");
+  hiddenEn.type = "hidden";
+  hiddenEn.dataset.path = path;
+  hiddenEn.dataset.lang = "en";
+  hiddenEn.value = value == null ? "" : String(value);
+  const hiddenZh = document.createElement("input");
+  hiddenZh.type = "hidden";
+  hiddenZh.dataset.path = path;
+  hiddenZh.dataset.lang = "zh";
+  hiddenZh.value = value == null ? "" : String(value);
+
+  const pickerWrap = document.createElement("div");
+  pickerWrap.className = "icon-picker-wrap";
+  let currentValue = String(value || "");
+
+  function updateCurrent(next) {
+    currentValue = next;
+    hiddenEn.value = next;
+    hiddenZh.value = next;
+    current.innerHTML = `<strong>${escapeHtml(next || "·")}</strong>当前选择：${escapeHtml(next || "未设置")}`;
+    scenePanel.querySelectorAll(".scene-emoji").forEach((btn) => btn.classList.toggle("active", btn.dataset.emojiValue === next));
+  }
+
+  wrap.appendChild(current);
+  wrap.appendChild(hiddenEn);
+  wrap.appendChild(hiddenZh);
+
+  const toolbar = document.createElement("div");
+  toolbar.className = "icon-toolbar";
+  const clearBtn = document.createElement("button");
+  clearBtn.type = "button";
+  clearBtn.className = "btn-ghost mini-btn";
+  clearBtn.textContent = "清空";
+  clearBtn.onclick = () => updateCurrent("");
+  const tip = document.createElement("div");
+  tip.className = "note";
+  tip.textContent = "下方是按情景分类的 emoji 选择器，支持搜索，体验会更接近 iPhone 的 icon 面板。";
+  toolbar.appendChild(clearBtn);
+  toolbar.appendChild(tip);
+  pickerWrap.appendChild(toolbar);
+
+  const sceneToolbar = document.createElement("div");
+  sceneToolbar.className = "scene-toolbar";
+  const scenePanel = document.createElement("div");
+  scenePanel.className = "scene-panel";
+  let activeSceneId = STATUS_SCENES[0].id;
+
+  function renderScenePanel() {
+    const scene = STATUS_SCENES.find((item) => item.id === activeSceneId) || STATUS_SCENES[0];
+    scenePanel.innerHTML = "";
+    const title = document.createElement("div");
+    title.className = "scene-title";
+    title.textContent = `情景：${scene.label}。先从这里快速选，如果还不够，再到下方完整 emoji 库继续挑。`;
+    scenePanel.appendChild(title);
+    const grid = document.createElement("div");
+    grid.className = "scene-grid";
+    scene.emojis.forEach((emoji) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "scene-emoji";
+      btn.dataset.emojiValue = emoji;
+      btn.textContent = emoji;
+      btn.classList.toggle("active", emoji === currentValue);
+      btn.onclick = () => {
+        updateCurrent(emoji);
+        showToast(`已选择状态 icon：${emoji}`);
+      };
+      grid.appendChild(btn);
+    });
+    scenePanel.appendChild(grid);
+  }
+
+  STATUS_SCENES.forEach((scene) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "scene-chip";
+    btn.textContent = scene.label;
+    btn.classList.toggle("active", scene.id === activeSceneId);
+    btn.onclick = () => {
+      activeSceneId = scene.id;
+      sceneToolbar.querySelectorAll(".scene-chip").forEach((node) => node.classList.toggle("active", node === btn));
+      renderScenePanel();
+    };
+    sceneToolbar.appendChild(btn);
+  });
+  pickerWrap.appendChild(sceneToolbar);
+  pickerWrap.appendChild(scenePanel);
+  renderScenePanel();
+
+  const shell = document.createElement("div");
+  shell.className = "emoji-picker-shell";
+  shell.innerHTML = `<div class="note" style="padding:14px">正在加载分类 emoji 图标库...</div>`;
+  ensureEmojiPickerReady().then(() => {
+    shell.innerHTML = "";
+    const picker = document.createElement("emoji-picker");
+    picker.setAttribute("locale", "zh-Hans");
+    picker.i18n = {
+      categories: {
+        custom: "自定义",
+        "smileys-emotion": "笑脸与情绪",
+        "people-body": "人物与身体",
+        "animals-nature": "动物与自然",
+        "food-drink": "食物与饮品",
+        "travel-places": "旅行与地点",
+        activities: "活动",
+        objects: "物品",
+        symbols: "符号",
+        flags: "旗帜"
+      },
+      categoriesLabel: "分类",
+      emojiUnsupportedMessage: "当前浏览器不支持彩色 emoji。",
+      favoritesLabel: "常用",
+      loadingMessage: "正在加载 emoji…",
+      networkErrorMessage: "emoji 数据加载失败。",
+      regionLabel: "状态图标选择器",
+      searchDescription: "出现搜索结果后，可用上下方向键选择并按回车确认。",
+      searchLabel: "搜索 emoji",
+      searchResultsLabel: "搜索结果",
+      skinToneDescription: "展开后可选择肤色。",
+      skinToneLabel: "选择肤色（当前 {skinTone}）",
+      skinTones: ["默认","浅色","中浅色","中等","中深色","深色"],
+      skinTonesLabel: "肤色"
+    };
+    picker.addEventListener("emoji-click", (event) => {
+      const selected = event.detail && (event.detail.unicode || event.detail.emoji?.unicode);
+      if (!selected) return;
+      updateCurrent(selected);
+      showToast(`已选择状态 icon：${selected}`);
+    });
+    shell.appendChild(picker);
+    enhanceEmojiPicker(picker);
+  }).catch((err) => {
+    shell.innerHTML = `<div class="note" style="padding:14px;color:#b91c1c">${escapeHtml(err.message || "Emoji 选择器组件加载失败")}</div>`;
+  });
+
+  pickerWrap.appendChild(shell);
+  wrap.appendChild(pickerWrap);
+  updateCurrent(String(value || ""));
+  return wrap;
+}
+
+function buildInputForLang(mode, path, lang, value) {
+  let input;
+  if (mode === "textarea") {
+    input = document.createElement("textarea");
+    input.value = value == null ? "" : String(value);
+  } else {
+    input = document.createElement("input");
+    input.type = mode === "checkbox" ? "checkbox" : mode === "number" ? "number" : mode === "date" ? "date" : "text";
+    if (mode === "checkbox") input.checked = Boolean(value);
+    else if (mode === "date") input.value = normalizeDateInputValue(value);
+    else input.value = value == null ? "" : String(value);
+  }
+  input.dataset.path = path;
+  input.dataset.lang = lang;
+  return input;
+}
+
+function renderDualPrimitive(key, enValue, zhValue, path) {
+  if (path === "status.icon") return renderStatusIconPicker(path, enValue || zhValue || "");
+  const wrap = document.createElement("div");
+  wrap.className = "field dual-wrap";
+  const label = document.createElement("label");
+  label.textContent = humanize(key);
+  wrap.appendChild(label);
+
+  const mode = inferFieldMode(key, enValue !== undefined ? enValue : zhValue);
+  const inputs = document.createElement("div");
+  inputs.className = "dual-inputs";
+
+  [["en", "EN", enValue], ["zh", "CH", zhValue]].forEach(([lang, title, value]) => {
+    const pane = document.createElement("div");
+    pane.className = "lang-pane";
+    const head = document.createElement("div");
+    head.className = "lang-head";
+    head.textContent = title;
+    pane.appendChild(head);
+    pane.appendChild(buildInputForLang(mode, path, lang, value));
+    inputs.appendChild(pane);
+  });
+
+  wrap.appendChild(inputs);
+  return wrap;
+}
+
+function renderPrimitive(key, value, path) {
+  if (path === "status.icon") return renderStatusIconPicker(path, value);
+  const wrap = document.createElement("div");
+  wrap.className = "field";
+  const label = document.createElement("label");
+  label.textContent = humanize(key);
+  wrap.appendChild(label);
+
+  const mode = inferFieldMode(key, value);
+  let input;
+  if (mode === "textarea") {
+    input = document.createElement("textarea");
+    input.value = value == null ? "" : String(value);
+  } else {
+    input = document.createElement("input");
+    input.type = mode === "checkbox" ? "checkbox" : mode === "number" ? "number" : mode === "date" ? "date" : "text";
+    if (mode === "checkbox") input.checked = Boolean(value);
+    else if (mode === "date") input.value = normalizeDateInputValue(value);
+    else input.value = value == null ? "" : String(value);
+  }
+  input.dataset.path = path;
+  wrap.appendChild(input);
+  return wrap;
+}
+
+function inferArrayTemplate(path, items) {
+  if (items.length > 0) {
+    const last = items[items.length - 1];
+    if (last && typeof last === "object") return clone(last);
+    return "";
+  }
+  const preset = arrayDefaults[normalizeArrayPath(path)];
+  return preset === undefined ? "" : clone(preset);
+}
+
+function renderNodeDual(key, enValue, zhValue, path) {
+  if (Array.isArray(enValue) || Array.isArray(zhValue)) return renderArrayDual(key, enValue || [], zhValue || [], path);
+  if ((enValue && typeof enValue === "object") || (zhValue && typeof zhValue === "object")) {
+    return renderObjectDual(key, enValue || {}, zhValue || {}, path);
+  }
+  return renderDualPrimitive(key, enValue, zhValue, path);
+}
+
+function renderObjectDual(key, enValue, zhValue, path) {
+  const box = document.createElement("div");
+  box.className = "obj";
+  if (key) {
+    const title = document.createElement("div");
+    title.className = "group-title";
+    title.textContent = humanize(key);
+    box.appendChild(title);
+  }
+  const keys = Array.from(new Set([...Object.keys(enValue || {}), ...Object.keys(zhValue || {})]));
+  keys.forEach((childKey) => {
+    box.appendChild(renderNodeDual(
+      childKey,
+      enValue ? enValue[childKey] : undefined,
+      zhValue ? zhValue[childKey] : undefined,
+      path ? `${path}.${childKey}` : childKey
+    ));
+  });
+  return box;
+}
+
+function renderArrayDual(key, enItems, zhItems, path) {
+  const box = document.createElement("div");
+  box.className = "obj";
+  box.dataset.arrayPath = path;
+  const head = document.createElement("div");
+  head.className = "item-head";
+  const title = document.createElement("div");
+  title.className = "group-title";
+  title.textContent = humanize(key);
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.className = "btn-ghost mini-btn";
+  addBtn.textContent = "新增";
+  head.appendChild(title);
+  head.appendChild(addBtn);
+  box.appendChild(head);
+
+  const list = document.createElement("div");
+  list.className = "array-items";
+  box.appendChild(list);
+  const items = { en: Array.isArray(enItems) ? enItems : [], zh: Array.isArray(zhItems) ? zhItems : [] };
+
+  function rerender() {
+    list.innerHTML = "";
+    const total = Math.max(items.en.length, items.zh.length);
+    for (let index = 0; index < total; index += 1) {
+      const enItem = index < items.en.length ? items.en[index] : inferArrayTemplate(path, items.en);
+      const zhItem = index < items.zh.length ? items.zh[index] : inferArrayTemplate(path, items.zh);
+      const itemBox = document.createElement("div");
+      itemBox.className = "group";
+      const itemHead = document.createElement("div");
+      itemHead.className = "item-head";
+      const itemTitle = document.createElement("div");
+      itemTitle.className = "note";
+      itemTitle.textContent = `${humanize(key)} #${index + 1}`;
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "btn-ghost mini-btn";
+      delBtn.textContent = "删除";
+      delBtn.onclick = () => {
+        items.en.splice(index, 1);
+        items.zh.splice(index, 1);
+        rerender();
+      };
+      itemHead.appendChild(itemTitle);
+      itemHead.appendChild(delBtn);
+      itemBox.appendChild(itemHead);
+
+      if (((enItem && typeof enItem === "object" && !Array.isArray(enItem)) || (zhItem && typeof zhItem === "object" && !Array.isArray(zhItem)))) {
+        const childKeys = Array.from(new Set([...Object.keys(enItem || {}), ...Object.keys(zhItem || {})]));
+        childKeys.forEach((childKey) => {
+          itemBox.appendChild(renderNodeDual(
+            childKey,
+            enItem ? enItem[childKey] : undefined,
+            zhItem ? zhItem[childKey] : undefined,
+            `${path}[${index}].${childKey}`
+          ));
+        });
+      } else {
+        itemBox.appendChild(renderDualPrimitive("item", enItem, zhItem, `${path}[${index}]`));
+      }
+      list.appendChild(itemBox);
+    }
+  }
+
+  addBtn.onclick = () => {
+    items.en.push(inferArrayTemplate(path, items.en));
+    items.zh.push(inferArrayTemplate(path, items.zh));
+    rerender();
+  };
+
+  rerender();
+  return box;
+}
+
+function renderRootDual(rootEl, enValue, zhValue) {
+  rootEl.innerHTML = "";
+  const keys = Array.from(new Set([...Object.keys(enValue || {}), ...Object.keys(zhValue || {})]));
+  keys.forEach((key) => {
+    rootEl.appendChild(renderNodeDual(
+      key,
+      enValue ? enValue[key] : undefined,
+      zhValue ? zhValue[key] : undefined,
+      key
+    ));
+  });
+}
+
+function findSection(frontmatter, matcher) {
+  return (frontmatter?.sections || []).find(matcher) || null;
+}
+
+function isRecentPublicationsSection(section) {
+  const folders = section?.content?.filters?.folders;
+  return section?.block === "collection" &&
+    !section?.id &&
+    Array.isArray(folders) &&
+    folders.includes("publications") &&
+    section?.content?.filters?.exclude_featured === false;
+}
+
+function buildHomeEditable(frontmatter) {
+  return {
+    hero: clone(findSection(frontmatter, (section) => section?.block === "resume-biography-3") || {}),
+    papers: clone(findSection(frontmatter, (section) => section?.id === "papers") || {}),
+    recent: clone(findSection(frontmatter, (section) => isRecentPublicationsSection(section)) || {}),
+    projects: clone(findSection(frontmatter, (section) => section?.id === "projects") || {}),
+    talks: clone(findSection(frontmatter, (section) => section?.id === "talks") || {}),
+    news: clone(findSection(frontmatter, (section) => section?.id === "news") || {}),
+    cta: clone(findSection(frontmatter, (section) => section?.block === "cta-card") || {}),
+  };
+}
+
+function applyHomeEditable(frontmatter, edited) {
+  const sections = frontmatter.sections || [];
+  const mappings = [
+    ["hero", (section) => section?.block === "resume-biography-3"],
+    ["papers", (section) => section?.id === "papers"],
+    ["recent", (section) => isRecentPublicationsSection(section)],
+    ["projects", (section) => section?.id === "projects"],
+    ["talks", (section) => section?.id === "talks"],
+    ["news", (section) => section?.id === "news"],
+    ["cta", (section) => section?.block === "cta-card"],
+  ];
+  mappings.forEach(([key, matcher]) => {
+    const index = sections.findIndex(matcher);
+    if (index >= 0 && edited[key]) sections[index] = edited[key];
+  });
+}
+
+function readBinaryInput(file, done) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const result = String(reader.result || "");
+    done({
+      name: file.name,
+      mimeType: file.type || "image/png",
+      base64: result.slice(result.indexOf(",") + 1),
+      preview: result,
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function setPreview(node, src, emptyText) {
+  if (!src) {
+    node.className = "preview empty";
+    node.innerHTML = escapeHtml(emptyText);
+    return;
+  }
+  node.className = "preview dropzone";
+  node.innerHTML = `<img src="${escapeHtml(src)}" alt="">`;
+}
+
+function setEmptyPreview(node, text) {
+  node.className = "preview empty dropzone";
+  node.innerHTML = escapeHtml(text);
+}
+
+function splitAuthorProfile(profile) {
+  const authorEditable = mergeDefaults(clone(profile.authorFrontmatter || {}), { awards: [] });
+  const resumeEditable = {
+    education: clone(authorEditable.education || []),
+    work: clone(authorEditable.work || []),
+    skills: clone(authorEditable.skills || []),
+    languages: clone(authorEditable.languages || []),
+    awards: clone(authorEditable.awards || []),
+  };
+  delete authorEditable.education;
+  delete authorEditable.work;
+  delete authorEditable.skills;
+  delete authorEditable.languages;
+  delete authorEditable.awards;
+  return {
+    authorEditable,
+    resumeEditable,
+    homeEditable: buildHomeEditable(clone(profile.homeFrontmatter || {})),
+    experienceEditable: clone(profile.experienceFrontmatter || {}),
+  };
+}
+
+async function loadProfile() {
+  st("正在读取中英文主页资料...", false, true);
+  const [enRes, zhRes] = await Promise.all([
+    fetch(`${api("/site-profile")}?lang=en`),
+    fetch(`${api("/site-profile")}?lang=zh`)
+  ]);
+  const [enJson, zhJson] = await Promise.all([enRes.json(), zhRes.json()]);
+  if (!enRes.ok) throw new Error(enJson.error || "英文资料读取失败");
+  if (!zhRes.ok) throw new Error(zhJson.error || "中文资料读取失败");
+
+  state.rawProfiles.en = enJson.profile;
+  state.rawProfiles.zh = zhJson.profile;
+  const enParts = splitAuthorProfile(enJson.profile);
+  const zhParts = splitAuthorProfile(zhJson.profile);
+  state.authorEditable = { en: enParts.authorEditable, zh: zhParts.authorEditable };
+  state.resumeEditable = { en: enParts.resumeEditable, zh: zhParts.resumeEditable };
+  state.homeEditable = { en: enParts.homeEditable, zh: zhParts.homeEditable };
+  state.experienceEditable = { en: enParts.experienceEditable, zh: zhParts.experienceEditable };
+  state.avatarUpload = null;
+  state.backgroundUpload = null;
+
+  renderRootDual(authorRootEl, state.authorEditable.en, state.authorEditable.zh);
+  renderRootDual(resumeRootEl, state.resumeEditable.en, state.resumeEditable.zh);
+  renderRootDual(homeRootEl, state.homeEditable.en, state.homeEditable.zh);
+  renderRootDual(experienceRootEl, state.experienceEditable.en, state.experienceEditable.zh);
+  aboutMeEl.value = "";
+  aboutMeEl.setAttribute("style", "display:none");
+  if (!document.getElementById("aboutMeDualHost")) {
+    const dualHost = document.createElement("div");
+    dualHost.id = "aboutMeDualHost";
+    aboutMeEl.insertAdjacentElement("afterend", dualHost);
+  }
+  const aboutMeDual = document.getElementById("aboutMeDualHost");
+  aboutMeDual.innerHTML = "";
+  aboutMeDual.appendChild(renderDualPrimitive("about_me", enJson.profile.authorBody || "", zhJson.profile.authorBody || "", "authorBody"));
+
+  const assets = enJson.profile.assets || zhJson.profile.assets || {};
+  const avatarSrc = assets.hasAvatar ? `${api("/site-profile/asset?kind=avatar&lang=en")}&t=${Date.now()}` : "";
+  const bgSrc = assets.hasBackground ? `${api("/site-profile/asset?kind=background&lang=en")}&t=${Date.now()}` : "";
+  if (avatarSrc) setPreview(avatarPreviewEl, avatarSrc, "当前未读取到头像");
+  else setEmptyPreview(avatarPreviewEl, "拖拽图片到这里，或使用下方文件选择");
+  if (bgSrc) setPreview(backgroundPreviewEl, bgSrc, "当前未读取到背景图");
+  else setEmptyPreview(backgroundPreviewEl, "拖拽图片到这里，或使用下方文件选择");
+  avatarMetaEl.textContent = assets.avatarFile ? `当前文件：${assets.avatarFile}` : "当前未设置头像文件";
+  backgroundMetaEl.textContent = assets.backgroundFile ? `当前文件：${assets.backgroundFile}` : "当前未设置背景文件";
+  st("中英文主页资料已载入", false, true);
+}
+
+async function saveProfile() {
+  const authorByLang = collectRootDual(authorRootEl);
+  const resumeByLang = collectRootDual(resumeRootEl);
+  const homeEditedByLang = collectRootDual(homeRootEl);
+  const experienceByLang = collectRootDual(experienceRootEl);
+  const aboutByLang = collectRootDual(document.getElementById("aboutMeDualHost"));
+
+  localStorage.setItem("publisher_api_base", base());
+  localStorage.setItem("publisher_password", passwordInput.value);
+  const saveLang = async (lang, withAssets) => {
+    const authorFrontmatter = clone(authorByLang[lang] || {});
+    const resume = resumeByLang[lang] || {};
+    authorFrontmatter.education = resume.education || [];
+    authorFrontmatter.work = resume.work || [];
+    authorFrontmatter.skills = resume.skills || [];
+    authorFrontmatter.languages = resume.languages || [];
+    authorFrontmatter.awards = resume.awards || [];
+
+    const homeFrontmatter = clone((state.rawProfiles[lang] && state.rawProfiles[lang].homeFrontmatter) || {});
+    applyHomeEditable(homeFrontmatter, homeEditedByLang[lang] || {});
+
+    const payload = {
+      password: passwordInput.value,
+      lang,
+      authorFrontmatter,
+      authorBody: getByPath(aboutByLang[lang], "authorBody") || "",
+      homeFrontmatter,
+      experienceFrontmatter: experienceByLang[lang] || {},
+      avatarUpload: withAssets && state.avatarUpload ? {
+        name: state.avatarUpload.name,
+        mimeType: state.avatarUpload.mimeType,
+        base64: state.avatarUpload.base64,
+      } : null,
+      backgroundUpload: withAssets && state.backgroundUpload ? {
+        name: state.backgroundUpload.name,
+        mimeType: state.backgroundUpload.mimeType,
+        base64: state.backgroundUpload.base64,
+      } : null,
+    };
+    const res = await fetch(api("/site-profile"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || `${lang.toUpperCase()} 保存失败`);
+    return json;
+  };
+
+  const enSaved = await saveLang("en", true);
+  const zhSaved = await saveLang("zh", false);
+  st(`中英文主页资料已保存\n${enSaved.saved.authorPath}\n${enSaved.saved.homePath}\n${enSaved.saved.experiencePath}\n${zhSaved.saved.authorPath}\n${zhSaved.saved.homePath}\n${zhSaved.saved.experiencePath}`, false, true);
+  await loadProfile();
+}
+
+tabs.forEach((tab) => {
+  tab.onclick = () => {
+    tabs.forEach((node) => node.classList.toggle("active", node === tab));
+    tabPanels.forEach((panel) => panel.classList.toggle("active", panel.id === `tab-${tab.dataset.tab}`));
+  };
+});
+
+avatarFileEl.onchange = (event) => {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  (async () => {
+    const confirmed = await askConfirm("是否确定更换图片", "更换主页头像");
+    if (!confirmed) {
+      avatarFileEl.value = "";
+      return;
+    }
+    readBinaryInput(file, (upload) => {
+      state.avatarUpload = upload;
+      setPreview(avatarPreviewEl, upload.preview, "当前未读取到头像");
+      avatarMetaEl.textContent = `待保存文件：${upload.name}`;
+      showToast("已选择新的主页头像");
+    });
+  })();
+};
+
+backgroundFileEl.onchange = (event) => {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  (async () => {
+    const confirmed = await askConfirm("是否确定更换图片", "更换主页背景图");
+    if (!confirmed) {
+      backgroundFileEl.value = "";
+      return;
+    }
+    readBinaryInput(file, (upload) => {
+      state.backgroundUpload = upload;
+      setPreview(backgroundPreviewEl, upload.preview, "当前未读取到背景图");
+      backgroundMetaEl.textContent = `待保存文件：${upload.name}`;
+      showToast("已选择新的主页背景图");
+    });
+  })();
+};
+
+function bindDropzone(node, kind) {
+  ["dragenter","dragover"].forEach((evt) => node.addEventListener(evt, (event) => {
+    event.preventDefault();
+    node.classList.add("dragover");
+  }));
+  ["dragleave","dragend","drop"].forEach((evt) => node.addEventListener(evt, (event) => {
+    event.preventDefault();
+    node.classList.remove("dragover");
+  }));
+  node.addEventListener("drop", async (event) => {
+    const file = event.dataTransfer && [...event.dataTransfer.files].find((item) => item.type.startsWith("image/"));
+    if (!file) {
+      showToast("请拖拽图片文件到该区域", true);
+      return;
+    }
+    const confirmed = await askConfirm("是否确定更换图片", kind === "avatar" ? "更换主页头像" : "更换主页背景图");
+    if (!confirmed) return;
+    readBinaryInput(file, (upload) => {
+      if (kind === "avatar") {
+        state.avatarUpload = upload;
+        setPreview(avatarPreviewEl, upload.preview, "当前未读取到头像");
+        avatarMetaEl.textContent = `待保存文件：${upload.name}`;
+        showToast("已拖拽新的主页头像");
+      } else {
+        state.backgroundUpload = upload;
+        setPreview(backgroundPreviewEl, upload.preview, "当前未读取到背景图");
+        backgroundMetaEl.textContent = `待保存文件：${upload.name}`;
+        showToast("已拖拽新的主页背景图");
+      }
+    });
+  });
+}
+
+confirmCancelEl.onclick = () => closeConfirm(false);
+confirmOkEl.onclick = () => closeConfirm(true);
+confirmMaskEl.onclick = (event) => {
+  if (event.target === confirmMaskEl) closeConfirm(false);
+};
+
+bindDropzone(avatarPreviewEl, "avatar");
+bindDropzone(backgroundPreviewEl, "background");
+
+reloadBtnEl.onclick = () => {
+  loadProfile().catch((err) => st(err.message, true, true));
+};
+
+saveBtnEl.onclick = async () => {
+  try {
+    saveBtnEl.disabled = true;
+    st("正在保存主页资料...", false, true);
+    await saveProfile();
+  } catch (err) {
+    st(err.message, true, true);
+  } finally {
+    saveBtnEl.disabled = false;
+  }
+};
+
+loadProfile().catch((err) => st(err.message, true, true));
+</script>
+</body>
+</html>

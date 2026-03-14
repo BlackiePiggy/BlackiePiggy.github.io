@@ -1,0 +1,161 @@
+{{ define "main" }}
+
+<div class="max-w-prose mx-auto flex justify-center">
+  <article class="prose prose-slate lg:prose-xl dark:prose-invert text-center">
+    <h1 class="lg:text-6xl text-center">{{ .Title }}</h1>
+    {{ .Content }}
+  </article>
+</div>
+
+{{ $view := .Params.view | default "card" }}
+{{ $block := . }}
+{{ $defaultSite := index site.Sites 0 }}
+{{ $useDefaultLangContent := and (ne site.Language.Lang $defaultSite.Language.Lang) (.Params.use_default_language_content | default false) }}
+{{ $pages := where site.RegularPages "Section" .Section }}
+{{ $enableViewSwitcher := .Params.enable_view_switcher | default false }}
+{{ if $useDefaultLangContent }}
+  {{ $pages = where $defaultSite.RegularPages "Section" .Section }}
+{{ end }}
+
+{{ range $pages }}
+  {{ if isset .Params "author_notes" }}
+    {{ $.Store.Set "has_alpine" true }}
+    {{ break }}
+  {{ end }}
+{{ end }}
+
+{{ if $enableViewSwitcher }}
+  <style>
+    .hb-view-toolbar{display:flex;justify-content:center}
+    .hb-view-toolbar-inner{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;width:100%;max-width:72rem;padding:6px 2px;background:transparent}
+    .hb-view-button-group{display:flex;gap:8px;flex-wrap:wrap}
+    .hb-view-btn{border:none;background:rgba(148,163,184,.12);color:inherit;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;transition:all .18s ease}
+    .hb-view-btn.is-active{background:#0f766e;color:#fff;border-color:#0f766e}
+    .hb-view-columns{display:flex;gap:8px;align-items:center;font-size:13px;color:inherit}
+    .hb-view-columns input{width:72px;border:none;background:rgba(148,163,184,.12);border-radius:999px;padding:8px 12px;font:inherit;color:inherit}
+    .hb-view-switchable .grid{transition:grid-template-columns .2s ease,gap .2s ease}
+    @media (min-width:768px){
+      .hb-view-switchable[data-view-mode="single"] .grid,
+      .hb-view-switchable[data-view-mode="plain"] .grid{grid-template-columns:minmax(0,1fr)!important}
+      .hb-view-switchable[data-view-mode="grid"] .grid{grid-template-columns:repeat(var(--hb-project-columns,3),minmax(0,1fr))!important}
+    }
+    .hb-view-switchable[data-view-mode="single"] .grid{justify-items:center}
+    .hb-view-switchable[data-view-mode="single"] .group{width:60%;max-width:56rem}
+    .hb-view-switchable[data-view-mode="plain"] .group>.overflow-hidden{display:none}
+    .hb-view-switchable[data-view-mode="plain"] .group{padding:12px 16px;border:1px solid rgba(148,163,184,.2);border-radius:14px;background:rgba(255,255,255,.72)}
+    .dark .hb-view-switchable[data-view-mode="plain"] .group{background:rgba(15,23,42,.52);border-color:rgba(148,163,184,.18)}
+    .hb-view-switchable[data-view-mode="plain"] .grid{gap:10px!important}
+    .hb-view-switchable[data-view-mode="plain"] .group>div>div{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      grid-template-areas:
+        "meta date"
+        "title title";
+      align-items:center;
+      column-gap:12px;
+      row-gap:6px;
+    }
+    .hb-view-switchable[data-view-mode="plain"] .group>div>div>div:first-child{grid-area:meta;min-width:0}
+    .hb-view-switchable[data-view-mode="plain"] .group>div>div>.flex-none{grid-area:date;justify-self:end}
+    .hb-view-switchable[data-view-mode="plain"] .group>div>div>h2{grid-area:title;margin-top:0!important;line-height:1.35}
+    .hb-view-switchable[data-view-mode="plain"] .group>div>div>.grow{display:none!important}
+    .hb-view-switchable[data-view-mode="plain"] .group>div>div .mt-5,
+    .hb-view-switchable[data-view-mode="plain"] .group>div>div .mt-3{margin-top:0!important}
+    @media (max-width:767px){
+      .hb-view-toolbar-inner{padding:12px}
+      .hb-view-columns{width:100%;justify-content:space-between}
+      .hb-view-columns input{width:88px}
+      .hb-view-switchable[data-view-mode="single"] .group{width:100%}
+    }
+  </style>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const shells = document.querySelectorAll("[data-view-shell]");
+      shells.forEach((shell) => {
+        const toolbar = shell.parentElement && shell.parentElement.querySelector("[data-hb-view-toolbar]");
+        const grid = shell.querySelector(".grid");
+        if (!toolbar || !grid) return;
+        const buttons = toolbar.querySelectorAll("[data-view-mode]");
+        const input = toolbar.querySelector("[data-view-columns]");
+        const paginatorLinks = shell.parentElement && shell.parentElement.querySelectorAll("nav a.page-link");
+        const storageKey = `hb-project-view:${shell.dataset.viewKey || location.pathname}`;
+        const search = new URLSearchParams(window.location.search);
+        let saved = {};
+        try { saved = JSON.parse(localStorage.getItem(storageKey) || "{}"); } catch {}
+        const defaultColumns = Number(shell.dataset.defaultColumns || 3);
+        const queryMode = search.get("hbView");
+        const queryColumns = Number(search.get("hbCols"));
+        let mode = queryMode || saved.mode || "single";
+        let columns = Math.max(2, Math.min(6, Number(queryColumns || saved.columns || defaultColumns) || defaultColumns));
+
+        if (!["single", "grid", "plain"].includes(mode)) mode = "single";
+
+        function syncPaginatorLinks() {
+          if (!paginatorLinks || !paginatorLinks.length) return;
+          paginatorLinks.forEach((link) => {
+            try {
+              const url = new URL(link.href, window.location.origin);
+              url.searchParams.set("hbView", mode);
+              url.searchParams.set("hbCols", String(columns));
+              link.href = url.pathname + url.search + url.hash;
+            } catch {}
+          });
+        }
+
+        function apply() {
+          shell.dataset.viewMode = mode;
+          shell.style.setProperty("--hb-project-columns", String(columns));
+          input.value = String(columns);
+          buttons.forEach((btn) => btn.classList.toggle("is-active", btn.dataset.viewMode === mode));
+          localStorage.setItem(storageKey, JSON.stringify({ mode, columns }));
+          syncPaginatorLinks();
+        }
+
+        buttons.forEach((btn) => btn.addEventListener("click", () => {
+          mode = btn.dataset.viewMode || "single";
+          apply();
+        }));
+
+        input.addEventListener("input", () => {
+          columns = Math.max(2, Math.min(6, Number(input.value || defaultColumns) || defaultColumns));
+          if (mode !== "grid") mode = "grid";
+          apply();
+        });
+
+        apply();
+      });
+    });
+  </script>
+{{ end }}
+
+<div class="flex flex-col items-center">
+  {{ if $enableViewSwitcher }}
+    <div class="hb-view-toolbar w-full max-w-screen-lg px-2 pb-6" data-hb-view-toolbar>
+      <div class="hb-view-toolbar-inner">
+        <div class="hb-view-button-group" role="group" aria-label="Collection view switcher">
+          <button class="hb-view-btn is-active" type="button" data-view-mode="single">{{ cond (hasPrefix site.Language.Lang "zh") "单列" "Single" }}</button>
+          <button class="hb-view-btn" type="button" data-view-mode="grid">{{ cond (hasPrefix site.Language.Lang "zh") "多列" "Grid" }}</button>
+          <button class="hb-view-btn" type="button" data-view-mode="plain">{{ cond (hasPrefix site.Language.Lang "zh") "无图" "No Image" }}</button>
+        </div>
+        <label class="hb-view-columns">
+          <span>{{ cond (hasPrefix site.Language.Lang "zh") "列数" "Cols" }}</span>
+          <input type="number" min="2" max="6" step="1" value="3" data-view-columns>
+        </label>
+      </div>
+    </div>
+  {{ end }}
+
+  <div class="hb-view-shell w-full{{ if $enableViewSwitcher }} hb-view-switchable{{ end }}"{{ if $enableViewSwitcher }} data-default-columns="3" data-view-key="{{ site.Language.Lang }}:{{ .Section }}" data-view-mode="single" data-view-shell style="--hb-project-columns:3"{{ end }}>
+    {{ partial "functions/render_view" (dict "fragment" "start" "page" $block "item" . "view" $view) }}
+
+    {{ $paginator := .Paginate ($pages.ByDate.Reverse) }}
+    {{ range $index, $item := $paginator.Pages }}
+      {{ partial "functions/render_view" (dict "page" . "item" . "view" $view "index" $index) }}
+    {{ end }}
+
+    {{ partial "functions/render_view" (dict "fragment" "end" "page" $block "item" . "view" $view) }}
+  </div>
+  {{ partial "components/paginator" . }}
+</div>
+
+{{ end }}
