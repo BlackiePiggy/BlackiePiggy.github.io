@@ -5,7 +5,7 @@ first_name: Li
 last_name: Jiayu
 pronouns: He
 status:
-  icon: 💼
+  icon: 🏂
 superuser: true
 highlight_name: true
 role: Master
@@ -18,6 +18,7 @@ profiles:
     label: E-mail Me
   - icon: brands/github
     url: https://github.com/BlackiePiggy
+    label: ""
 interests:
   - AI for Navigation
   - Artificial Intelligence
@@ -129,6 +130,9 @@ awards: []
 ## About Me
 
 Jiayu Li is a Master's student in Electronic Information at the Institute of Sensing & Navigation, Shanghai Jiao Tong University. His research interests include AI for Navigation, AI for Time Series, and GNSS Positioning. His current work focuses on deep learning–based satellite flex power detection and anomaly detection in onboard atomic clock telemetry time series.
+
+
+
 
 
 

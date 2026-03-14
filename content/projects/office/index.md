@@ -10,6 +10,8 @@ tags:
   - Technique
 featured: true
 draft: false
+word_count: 290
+reading_time: 2
 ---
 
 <!--more-->
@@ -39,4 +41,5 @@ draft: false
  激活成功。
 
  ![img](https://picture-jasonlee.oss-cn-shanghai.aliyuncs.com/media_20260313_231533/media-005-1773414934186.png)
+
 

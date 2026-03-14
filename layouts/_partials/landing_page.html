@@ -1,0 +1,6 @@
+{{/* Local override: support hiding homepage sections without deleting section data. */}}
+{{ range $index, $block := .Params.sections }}
+  {{ if and (not $block.disabled) (or (not $block.demo) ($block.demo | and (eq (os.Getenv "HUGO_BLOX_DEMO") "true"))) }}
+    {{ partial "functions/parse_block_v2" (dict "page" $ "block" $block) }}
+  {{ end }}
+{{ end }}

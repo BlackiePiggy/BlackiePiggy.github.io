@@ -1,5 +1,5 @@
 ---
-title: Projects
+title: Project
 translationKey: projects-page
 view: article-grid
 enable_view_switcher: true

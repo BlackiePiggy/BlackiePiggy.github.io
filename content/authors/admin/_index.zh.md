@@ -5,7 +5,7 @@ first_name: Li
 last_name: Jiayu
 pronouns: 他
 status:
-  icon: 💼
+  icon: 🏂
 superuser: true
 highlight_name: true
 role: 硕士研究生
@@ -15,14 +15,14 @@ organizations:
 profiles:
   - icon: at-symbol
     url: mailto:jason_lee@sjtu.edu.cn
-    label: 给我发邮件
+    label: 邮件
   - icon: brands/github
     url: https://github.com/BlackiePiggy
     label: GitHub
 interests:
-  - 导航智能化
-  - 人工智能
-  - GNSS 定位
+  - AI for Navigation
+  - AI
+  - GNSS 定位算法
 education:
   - area: 电子信息 硕士
     institution: 上海交通大学
@@ -129,4 +129,7 @@ awards: []
 
 ## 关于我
 
-李嘉渝，上海交通大学电子信息专业硕士，隶属于感知与导航研究所。研究兴趣包括导航智能化、时间序列智能分析以及 GNSS 高精度定位。当前主要聚焦于基于深度学习的卫星弹性功率检测，以及星载原子钟遥测时间序列中的异常检测问题。
+李嘉渝，工学硕士，毕业于上海交通大学电子信息感知与导航研究所。研究兴趣包括导航智能化、时间序列智能分析以及 GNSS 高精度定位。当前主要聚焦于基于深度学习的卫星弹性功率检测，以及星载原子钟遥测时间序列中的异常检测问题。
+
+
+

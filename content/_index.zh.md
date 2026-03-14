@@ -1,13 +1,9 @@
 ---
-# Leave the homepage title empty to use the site title
 title: ""
-date: 2022-10-24
+date: "2022-10-24T00:00:00.000Z"
 type: landing
-
 design:
-  # Default section spacing
-  spacing: "6rem"
-
+  spacing: 6rem
 sections:
   - block: resume-biography-3
     content:
@@ -26,67 +22,74 @@ sections:
         image:
           filename: bg2.jpg
           filters:
-            brightness: 1.0
+            brightness: 1
           size: cover
           position: center
           parallax: false
+    disabled: false
+    sync_key: sec-53baa0161569
   - block: collection
     id: papers
     content:
       title: 精选论文
-      use_default_language_content: true
       filters:
         folders:
           - publications
         featured_only: true
+      use_default_language_content: true
     design:
       view: article-grid
       columns: 2
-  - block: collection
-    content:
-      title: 近期论文
-      text: ""
-      use_default_language_content: true
-      filters:
-        folders:
-          - publications
-        exclude_featured: false
-    design:
-      view: citation
-
+    disabled: false
+    sync_key: sec-b676b390fb29
   - block: collection
     id: projects
     content:
       title: 项目
-      use_default_language_content: true
       filters:
         folders:
           - projects
       count: 8
+      use_default_language_content: true
     design:
       view: article-grid
       columns: 4
-
+    disabled: false
+    sync_key: sec-56fd683fdc18
   - block: collection
     id: talks
     content:
-      title: 展示与分享
-      use_default_language_content: true
+      title: Presentation
       filters:
         folders:
           - event
+      use_default_language_content: true
     design:
       view: article-grid
       columns: 1
+    disabled: false
+    sync_key: sec-916c88428dc4
+  - block: collection
+    content:
+      title: 近期论文
+      text: ""
+      filters:
+        folders:
+          - publications
+        exclude_featured: false
+      use_default_language_content: true
+    design:
+      view: citation
+    disabled: false
+    sync_key: sec-f2533e65ee36
   - block: collection
     id: news
     content:
       title: 更多关于我
-      subtitle: ''
-      text: ''
+      subtitle: ""
+      text: ""
       page_type: post
       count: 5
-      use_default_language_content: true
       filters:
         author: ""
         category: ""
@@ -97,10 +100,17 @@ sections:
         publication_type: ""
       offset: 0
       order: desc
+      use_default_language_content: true
     design:
       view: date-title-summary
       spacing:
-        padding: [0, 0, 0, 0]
+        padding:
+          - 0
+          - 0
+          - 0
+          - 0
+    disabled: true
+    sync_key: sec-db787184ce05
   - block: cta-card
     demo: true
     content:
@@ -114,6 +124,8 @@ sections:
         url: https://hugoblox.com/templates/
     design:
       card:
-        css_class: "bg-primary-700"
+        css_class: bg-primary-700
         css_style: ""
+    disabled: true
+    sync_key: sec-4efd74c1c16a
 ---

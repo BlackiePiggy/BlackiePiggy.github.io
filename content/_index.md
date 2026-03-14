@@ -26,6 +26,8 @@ sections:
           size: cover
           position: center
           parallax: false
+    disabled: false
+    sync_key: sec-53baa0161569
   - block: collection
     id: papers
     content:
@@ -34,9 +36,39 @@ sections:
         folders:
           - publications
         featured_only: true
+      use_default_language_content: false
     design:
       view: article-grid
       columns: 2
+    disabled: false
+    sync_key: sec-b676b390fb29
+  - block: collection
+    id: projects
+    content:
+      title: Project
+      filters:
+        folders:
+          - projects
+      count: 8
+      use_default_language_content: false
+    design:
+      view: article-grid
+      columns: 4
+    disabled: false
+    sync_key: sec-56fd683fdc18
+  - block: collection
+    id: talks
+    content:
+      title: Presentation
+      filters:
+        folders:
+          - event
+      use_default_language_content: false
+    design:
+      view: article-grid
+      columns: 1
+    disabled: false
+    sync_key: sec-916c88428dc4
   - block: collection
     content:
       title: Recent Publications
@@ -45,29 +77,11 @@ sections:
         folders:
           - publications
         exclude_featured: false
+      use_default_language_content: false
     design:
       view: citation
-  - block: collection
-    id: projects
-    content:
-      title: Projects
-      filters:
-        folders:
-          - projects
-      count: 8
-    design:
-      view: article-grid
-      columns: 4
-  - block: collection
-    id: talks
-    content:
-      title: Presentations
-      filters:
-        folders:
-          - event
-    design:
-      view: article-grid
-      columns: 1
+    disabled: false
+    sync_key: sec-f2533e65ee36
   - block: collection
     id: news
     content:
@@ -86,6 +100,7 @@ sections:
         publication_type: ""
       offset: 0
       order: desc
+      use_default_language_content: false
     design:
       view: date-title-summary
       spacing:
@@ -94,6 +109,8 @@ sections:
           - 0
           - 0
           - 0
+    disabled: true
+    sync_key: sec-db787184ce05
   - block: cta-card
     demo: true
     content:
@@ -113,4 +130,6 @@ sections:
       card:
         css_class: bg-primary-700
         css_style: ""
+    disabled: true
+    sync_key: sec-4efd74c1c16a
 ---

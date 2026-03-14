@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BlackiePiggy CMS | 首页模块管理</title>
+  <link rel="icon" type="image/svg+xml" href="/publisher/favicon.svg" />
+  <style>
+    :root{--bg:#eef2f7;--panel:#fff;--line:#d7dee7;--text:#15202b;--muted:#637282;--brand:#0f766e;--brand2:#1e9b86;--soft:#effaf5;--danger:#b91c1c}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text)}
+    .layout{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+    .side{position:sticky;top:0;height:100vh;overflow-y:auto;background:linear-gradient(160deg,#0d3e39,#0b2e32);color:#dff7f4;padding:20px}
+    .brand{font-size:20px;font-weight:700;margin-bottom:20px}
+    .nav a{display:block;color:#dff7f4;text-decoration:none;padding:10px 12px;border-radius:10px;margin-bottom:6px}
+    .nav a.active,.nav a:hover{background:rgba(255,255,255,.14)}
+    .main{padding:18px}
+    .top,.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+    .top{padding:14px 16px;margin-bottom:14px}
+    .top h1{margin:0 0 6px}
+    .muted{color:var(--muted);font-size:13px}
+    .panel{padding:14px;margin-bottom:12px}
+    .toolbar{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:end}
+    .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input,select,textarea,button{width:100%;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px;font-size:14px}
+    button{cursor:pointer}
+    .btn{border:none;background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff}
+    .btn.secondary{background:#fff;color:var(--text);border:1px solid var(--line)}
+    .lang-tabs{display:inline-flex;padding:4px;border:1px solid var(--line);border-radius:999px;background:#fff}
+    .lang-tabs button{width:auto;border:none;background:transparent;padding:8px 12px;border-radius:999px}
+    .lang-tabs button.active{background:var(--brand);color:#fff}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .pane{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fcfdff}
+    .pane h3{margin:2px 0 10px}
+    .list{min-height:220px;display:flex;flex-direction:column;gap:8px}
+    .item{display:grid;grid-template-columns:18px 1fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;transition:transform .24s cubic-bezier(.22,1,.36,1),opacity .18s ease,box-shadow .18s ease}
+    .item.dragging{opacity:.35;box-shadow:0 10px 24px rgba(15,118,110,.14)}
+    .item.dragging-collapsed{
+      opacity:0!important;
+      height:0!important;
+      min-height:0!important;
+      padding-top:0!important;
+      padding-bottom:0!important;
+      margin:0!important;
+      border-width:0!important;
+      overflow:hidden!important;
+      pointer-events:none!important;
+      transform:none!important;
+    }
+    .list.drag-active .item{will-change:transform}
+    .drop-slot{height:0;border:2px dashed transparent;border-radius:10px;background:transparent;opacity:0;transform:scale(.98);transition:height .22s cubic-bezier(.22,1,.36,1),opacity .18s ease,transform .22s cubic-bezier(.22,1,.36,1),border-color .18s ease,background-color .18s ease}
+    .drop-slot.active{opacity:1;transform:scale(1);border-color:rgba(15,118,110,.45);background:rgba(15,118,110,.08)}
+    .handle{color:#8b9aaa;cursor:grab;font-size:16px;line-height:1}
+    .item-title{font-weight:600}
+    .item-sub{font-size:12px;color:var(--muted);margin-top:2px;word-break:break-all}
+    .mini{display:flex;gap:6px;align-items:center}
+    .mini button{width:auto;padding:6px 9px;font-size:12px;border-radius:8px}
+    .switch{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+    .editor{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+    .editor h4{margin:0 0 10px}
+    .editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .editor textarea{min-height:260px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+    .hint{font-size:12px;color:var(--muted)}
+    .status{white-space:pre-wrap;font-size:13px}
+    .toast-stack{position:fixed;right:18px;top:18px;display:flex;flex-direction:column;gap:10px;z-index:9999;pointer-events:none}
+    .toast{min-width:220px;max-width:360px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--text);box-shadow:0 12px 30px rgba(21,32,43,.12);opacity:0;transform:translateY(8px);animation:toast-in .18s ease forwards}
+    .toast.ok{border-color:#b7e4d7;background:var(--soft);color:#065f46}
+    .toast.err{border-color:#efb6b6;background:#fff5f5;color:var(--danger)}
+    .toast.fade-out{animation:toast-out .22s ease forwards}
+    @keyframes toast-in{to{opacity:1;transform:translateY(0)}}
+    @keyframes toast-out{to{opacity:0;transform:translateY(8px)}}
+    @media (max-width:1120px){
+      .layout{grid-template-columns:1fr}
+      .side{position:relative;height:auto;padding:14px}
+      .toolbar{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr}
+      .editor-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <div class="brand">Publisher CMS</div>
+    <nav class="nav">
+      <a href="/publisher/">总览</a>
+      <a href="/publisher/profile-manage.html">主页资料</a>
+      <a href="/publisher/home-modules.html" class="active">首页模块</a>
+      <a href="/publisher/create.html">新建发布</a>
+      <a href="/publisher/manage.html">内容管理</a>
+      <a href="/publisher/media-upload.html">Media Upload</a>
+      <a href="/publisher/template-manage.html">模板管理</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <section class="top">
+      <h1>首页模块管理</h1>
+      <div class="muted">管理导航栏菜单与首页模块：拖拽排序、显示/隐藏、新增/删除、模板 JSON 编辑。</div>
+    </section>
+
+    <section class="panel">
+      <div class="toolbar">
+        <div class="field"><label>API 地址</label><input id="apiBase"></div>
+        <div class="field"><label>密码</label><input id="password" type="password"></div>
+        <div class="field"><label>语言</label>
+          <div class="lang-tabs">
+            <button id="langEn" type="button" class="active">EN</button>
+            <button id="langZh" type="button">CH</button>
+          </div>
+        </div>
+        <button id="saveBtn" class="btn" type="button">保存全部</button>
+      </div>
+      <div id="status" class="status" style="margin-top:10px"></div>
+    </section>
+
+    <section class="grid">
+      <article class="pane">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <h3>导航菜单</h3>
+          <button id="addMenuBtn" class="btn secondary" type="button" style="width:auto">新增菜单项</button>
+        </div>
+        <div id="menuList" class="list"></div>
+        <div class="hint">拖拽左侧手柄可以调整导航顺序。</div>
+      </article>
+
+      <article class="pane">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <h3>首页模块</h3>
+          <button id="addSectionBtn" class="btn secondary" type="button" style="width:auto">新增模块</button>
+        </div>
+        <div id="sectionList" class="list"></div>
+        <div class="hint">模块隐藏时不会渲染到首页，但配置会保留。</div>
+      </article>
+    </section>
+
+    <section class="panel editor">
+      <h4 id="editorTitle">编辑器</h4>
+      <div id="menuEditor" style="display:none">
+        <div class="editor-grid">
+          <div class="field"><label>名称</label><input id="menuName"></div>
+          <div class="field"><label>URL</label><input id="menuUrl" placeholder="/#papers"></div>
+          <div class="field"><label>Identifier</label><input id="menuIdentifier"></div>
+          <div class="field"><label>权重</label><input id="menuWeight" type="number"></div>
+        </div>
+      </div>
+      <div id="sectionEditor" style="display:none">
+        <div class="editor-grid">
+          <div class="field"><label>block</label><input id="sectionBlock"></div>
+          <div class="field"><label>id</label><input id="sectionId"></div>
+          <div class="field"><label>title（content.title）</label><input id="sectionTitle"></div>
+          <div class="field"><label>可见性</label><select id="sectionVisible"><option value="1">显示</option><option value="0">隐藏</option></select></div>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label>模块模板 JSON（高级）</label>
+          <textarea id="sectionJson"></textarea>
+        </div>
+      </div>
+      <div id="emptyEditor" class="muted">点击左侧任意菜单项或模块，进行细节编辑。</div>
+    </section>
+  </main>
+</div>
+
+<script>
+const local = ["localhost", "127.0.0.1"].includes(location.hostname);
+const apiBaseEl = document.getElementById("apiBase");
+const passwordEl = document.getElementById("password");
+const langEnBtn = document.getElementById("langEn");
+const langZhBtn = document.getElementById("langZh");
+const saveBtn = document.getElementById("saveBtn");
+const addMenuBtn = document.getElementById("addMenuBtn");
+const addSectionBtn = document.getElementById("addSectionBtn");
+const menuListEl = document.getElementById("menuList");
+const sectionListEl = document.getElementById("sectionList");
+const statusEl = document.getElementById("status");
+const editorTitleEl = document.getElementById("editorTitle");
+const emptyEditorEl = document.getElementById("emptyEditor");
+const menuEditorEl = document.getElementById("menuEditor");
+const sectionEditorEl = document.getElementById("sectionEditor");
+const menuNameEl = document.getElementById("menuName");
+const menuUrlEl = document.getElementById("menuUrl");
+const menuIdentifierEl = document.getElementById("menuIdentifier");
+const menuWeightEl = document.getElementById("menuWeight");
+const sectionBlockEl = document.getElementById("sectionBlock");
+const sectionIdEl = document.getElementById("sectionId");
+const sectionTitleEl = document.getElementById("sectionTitle");
+const sectionVisibleEl = document.getElementById("sectionVisible");
+const sectionJsonEl = document.getElementById("sectionJson");
+
+const toastStackEl = document.body.appendChild(document.createElement("div"));
+toastStackEl.className = "toast-stack";
+
+apiBaseEl.value = localStorage.getItem("publisher_api_base") || (local ? "http://127.0.0.1:8790" : "");
+passwordEl.value = localStorage.getItem("publisher_password") || (local ? "123456" : "");
+
+const state = {
+  lang: "en",
+  menuItems: [],
+  sections: [],
+  selected: { kind: "", index: -1 },
+};
+const dragState = { active: false, kind: "", from: -1, to: -1, listEl: null, slotEl: null, itemHeight: 58, ghostEl: null };
+
+function e(tag, attrs = {}, children = []) {
+  const node = document.createElement(tag);
+  Object.entries(attrs).forEach(([k, v]) => {
+    if (k === "text") node.textContent = v;
+    else if (k === "html") node.innerHTML = v;
+    else node.setAttribute(k, v);
+  });
+  children.forEach((child) => node.appendChild(child));
+  return node;
+}
+function showToast(message, isError = false) {
+  const toast = e("div", { class: `toast ${isError ? "err" : "ok"}`, text: message });
+  toastStackEl.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add("fade-out");
+    setTimeout(() => toast.remove(), 220);
+  }, 1800);
+}
+function st(msg, isError = false, notify = false) {
+  statusEl.style.color = isError ? "#b91c1c" : "#065f46";
+  statusEl.textContent = msg;
+  if (notify) showToast(String(msg).split("\n")[0], isError);
+}
+function base() {
+  return apiBaseEl.value.replace(/\/+$/, "");
+}
+function deepClone(v) {
+  return JSON.parse(JSON.stringify(v));
+}
+function langLabel() {
+  return state.lang === "zh" ? "CH" : "EN";
+}
+function setLang(lang) {
+  state.lang = lang === "zh" ? "zh" : "en";
+  langEnBtn.classList.toggle("active", state.lang === "en");
+  langZhBtn.classList.toggle("active", state.lang === "zh");
+  loadData();
+}
+function listItemTitle(item) {
+  const title = item && item.content && item.content.title ? String(item.content.title) : "";
+  const id = item && item.id ? String(item.id) : "";
+  return title || id || String(item.block || "untitled");
+}
+
+function ensureDragSlot() {
+  if (dragState.slotEl) return dragState.slotEl;
+  dragState.slotEl = e("div", { class: "drop-slot", "aria-hidden": "true" });
+  return dragState.slotEl;
+}
+function clearDragState() {
+  if (dragState.slotEl && dragState.slotEl.parentElement) dragState.slotEl.parentElement.removeChild(dragState.slotEl);
+  if (dragState.slotEl) {
+    dragState.slotEl.classList.remove("active");
+    dragState.slotEl.style.height = "0px";
+  }
+  if (dragState.listEl) {
+    const draggingNode = dragState.listEl.querySelector(".item.dragging, .item.dragging-collapsed");
+    if (draggingNode) draggingNode.classList.remove("dragging", "dragging-collapsed");
+  }
+  if (dragState.ghostEl && dragState.ghostEl.parentElement) dragState.ghostEl.parentElement.removeChild(dragState.ghostEl);
+  if (dragState.listEl) dragState.listEl.classList.remove("drag-active");
+  dragState.active = false;
+  dragState.kind = "";
+  dragState.from = -1;
+  dragState.to = -1;
+  dragState.listEl = null;
+  dragState.itemHeight = 58;
+  dragState.ghostEl = null;
+}
+function updateSelectedAfterMove(kind, from, to) {
+  if (state.selected.kind !== kind) return;
+  if (state.selected.index === from) state.selected.index = to;
+  else if (from < state.selected.index && state.selected.index <= to) state.selected.index -= 1;
+  else if (to <= state.selected.index && state.selected.index < from) state.selected.index += 1;
+}
+function computeInsertIndex(listEl, y) {
+  const rows = [...listEl.querySelectorAll(".item:not(.dragging)")];
+  for (const row of rows) {
+    const idx = Number(row.dataset.index);
+    const rect = row.getBoundingClientRect();
+    if (y < rect.top + rect.height / 2) return idx;
+  }
+  return listEl.querySelectorAll(".item").length;
+}
+function placeDragSlot(listEl, to) {
+  const slot = ensureDragSlot();
+  slot.classList.add("active");
+  slot.style.height = `${Math.max(48, Number(dragState.itemHeight) || 58)}px`;
+  const rows = [...listEl.querySelectorAll(".item")];
+  const before = rows.find((row) => Number(row.dataset.index) >= to && !row.classList.contains("dragging"));
+  if (before) listEl.insertBefore(slot, before);
+  else listEl.appendChild(slot);
+}
+function makeDraggable(listEl, arr, kind) {
+  listEl.querySelectorAll(".item").forEach((node) => {
+    node.draggable = true;
+    node.addEventListener("dragstart", (ev) => {
+      dragState.active = true;
+      dragState.kind = kind;
+      dragState.from = Number(node.dataset.index);
+      dragState.to = dragState.from;
+      dragState.listEl = listEl;
+      dragState.itemHeight = node.getBoundingClientRect().height || 58;
+      node.classList.add("dragging");
+      listEl.classList.add("drag-active");
+      ev.dataTransfer.effectAllowed = "move";
+      ev.dataTransfer.setData("text/plain", String(dragState.from));
+      const ghost = node.cloneNode(true);
+      ghost.style.position = "fixed";
+      ghost.style.top = "-9999px";
+      ghost.style.left = "-9999px";
+      ghost.style.width = `${node.getBoundingClientRect().width}px`;
+      ghost.style.pointerEvents = "none";
+      ghost.style.opacity = ".92";
+      document.body.appendChild(ghost);
+      dragState.ghostEl = ghost;
+      ev.dataTransfer.setDragImage(ghost, 24, 20);
+      requestAnimationFrame(() => node.classList.add("dragging-collapsed"));
+    });
+    node.addEventListener("dragend", () => {
+      clearDragState();
+    });
+  });
+
+  listEl.ondragover = (ev) => {
+    if (!dragState.active || dragState.kind !== kind || dragState.listEl !== listEl) return;
+    ev.preventDefault();
+    const to = computeInsertIndex(listEl, ev.clientY);
+    dragState.to = to;
+    if (to === dragState.from || to === dragState.from + 1) {
+      if (dragState.slotEl && dragState.slotEl.parentElement === listEl) dragState.slotEl.remove();
+      return;
+    }
+    placeDragSlot(listEl, to);
+  };
+  listEl.ondrop = (ev) => {
+    if (!dragState.active || dragState.kind !== kind || dragState.listEl !== listEl) return;
+    ev.preventDefault();
+    const from = dragState.from;
+    const rawTo = Number.isInteger(dragState.to) ? dragState.to : from;
+    const to = rawTo > from ? rawTo - 1 : rawTo;
+    if (!Number.isInteger(from) || from < 0 || !Number.isInteger(to) || to < 0 || from === to) return;
+    const moved = arr.splice(from, 1)[0];
+    arr.splice(Math.min(to, arr.length), 0, moved);
+    updateSelectedAfterMove(kind, from, Math.min(to, arr.length - 1));
+    renderAll();
+    showToast(`已调整${kind === "menu" ? "菜单" : "模块"}顺序`);
+  };
+  listEl.ondragleave = (ev) => {
+    if (!dragState.active || dragState.kind !== kind || dragState.listEl !== listEl) return;
+    const related = ev.relatedTarget;
+    if (!related || !listEl.contains(related)) {
+      if (dragState.slotEl && dragState.slotEl.parentElement === listEl) dragState.slotEl.remove();
+    }
+  };
+}
+
+function renderMenus() {
+  menuListEl.innerHTML = "";
+  state.menuItems.forEach((item, index) => {
+    const row = e("div", { class: "item", "data-index": String(index) });
+    const handle = e("div", { class: "handle", text: "⋮⋮" });
+    const content = e("div", {}, [
+      e("div", { class: "item-title", text: item.name || `Menu ${index + 1}` }),
+      e("div", { class: "item-sub", text: `${item.url || "/"} · ${item.identifier || ""}` }),
+    ]);
+    const actions = e("div", { class: "mini" });
+    const visible = e("label", { class: "switch" }, [
+      e("input", { type: "checkbox" }),
+      e("span", { text: "显示" }),
+    ]);
+    visible.querySelector("input").checked = !item.hidden;
+    visible.querySelector("input").onchange = () => {
+      item.hidden = !visible.querySelector("input").checked;
+      showToast(item.hidden ? "菜单项已隐藏" : "菜单项已显示");
+    };
+    const editBtn = e("button", { type: "button", text: "编辑" });
+    editBtn.onclick = () => selectEditor("menu", index);
+    const delBtn = e("button", { type: "button", text: "删除" });
+    delBtn.onclick = () => {
+      state.menuItems.splice(index, 1);
+      if (state.selected.kind === "menu" && state.selected.index === index) clearEditor();
+      renderAll();
+      showToast("菜单项已删除");
+    };
+    actions.appendChild(visible);
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+    row.appendChild(handle);
+    row.appendChild(content);
+    row.appendChild(actions);
+    row.onclick = (ev) => {
+      if (ev.target.closest("button") || ev.target.closest("label")) return;
+      selectEditor("menu", index);
+    };
+    menuListEl.appendChild(row);
+  });
+  makeDraggable(menuListEl, state.menuItems, "menu");
+}
+
+function renderSections() {
+  sectionListEl.innerHTML = "";
+  state.sections.forEach((item, index) => {
+    const row = e("div", { class: "item", "data-index": String(index) });
+    const handle = e("div", { class: "handle", text: "⋮⋮" });
+    const content = e("div", {}, [
+      e("div", { class: "item-title", text: listItemTitle(item) }),
+      e("div", { class: "item-sub", text: `${item.block || ""}${item.id ? ` · #${item.id}` : ""}` }),
+    ]);
+    const actions = e("div", { class: "mini" });
+    const visible = e("label", { class: "switch" }, [
+      e("input", { type: "checkbox" }),
+      e("span", { text: "显示" }),
+    ]);
+    visible.querySelector("input").checked = !item.disabled;
+    visible.querySelector("input").onchange = () => {
+      item.disabled = !visible.querySelector("input").checked;
+      if (state.selected.kind === "section" && state.selected.index === index) sectionVisibleEl.value = item.disabled ? "0" : "1";
+      showToast(item.disabled ? "模块已隐藏" : "模块已显示");
+    };
+    const editBtn = e("button", { type: "button", text: "编辑" });
+    editBtn.onclick = () => selectEditor("section", index);
+    const delBtn = e("button", { type: "button", text: "删除" });
+    delBtn.onclick = () => {
+      state.sections.splice(index, 1);
+      if (state.selected.kind === "section" && state.selected.index === index) clearEditor();
+      renderAll();
+      showToast("模块已删除");
+    };
+    actions.appendChild(visible);
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+    row.appendChild(handle);
+    row.appendChild(content);
+    row.appendChild(actions);
+    row.onclick = (ev) => {
+      if (ev.target.closest("button") || ev.target.closest("label")) return;
+      selectEditor("section", index);
+    };
+    sectionListEl.appendChild(row);
+  });
+  makeDraggable(sectionListEl, state.sections, "section");
+}
+
+function selectEditor(kind, index) {
+  state.selected.kind = kind;
+  state.selected.index = index;
+  emptyEditorEl.style.display = "none";
+  if (kind === "menu") {
+    sectionEditorEl.style.display = "none";
+    menuEditorEl.style.display = "block";
+    const item = state.menuItems[index];
+    editorTitleEl.textContent = `编辑菜单项 · ${item.name || `Item ${index + 1}`}`;
+    menuNameEl.value = item.name || "";
+    menuUrlEl.value = item.url || "";
+    menuIdentifierEl.value = item.identifier || "";
+    menuWeightEl.value = String(item.weight || (index + 1) * 10);
+  } else {
+    menuEditorEl.style.display = "none";
+    sectionEditorEl.style.display = "block";
+    const item = state.sections[index];
+    editorTitleEl.textContent = `编辑首页模块 · ${listItemTitle(item)}`;
+    sectionBlockEl.value = item.block || "";
+    sectionIdEl.value = item.id || "";
+    sectionTitleEl.value = (item.content && item.content.title) || "";
+    sectionVisibleEl.value = item.disabled ? "0" : "1";
+    sectionJsonEl.value = JSON.stringify(item, null, 2);
+  }
+}
+
+function clearEditor() {
+  state.selected.kind = "";
+  state.selected.index = -1;
+  editorTitleEl.textContent = "编辑器";
+  menuEditorEl.style.display = "none";
+  sectionEditorEl.style.display = "none";
+  emptyEditorEl.style.display = "block";
+}
+
+function renderAll() {
+  renderMenus();
+  renderSections();
+  if (state.selected.index >= 0) selectEditor(state.selected.kind, state.selected.index);
+}
+
+function bindEditors() {
+  const syncMenu = () => {
+    if (state.selected.kind !== "menu" || state.selected.index < 0) return;
+    const item = state.menuItems[state.selected.index];
+    item.name = menuNameEl.value.trim();
+    item.url = menuUrlEl.value.trim();
+    item.identifier = menuIdentifierEl.value.trim();
+    item.weight = Number(menuWeightEl.value || 0);
+    renderMenus();
+  };
+  menuNameEl.oninput = syncMenu;
+  menuUrlEl.oninput = syncMenu;
+  menuIdentifierEl.oninput = syncMenu;
+  menuWeightEl.oninput = syncMenu;
+
+  const syncSectionFields = () => {
+    if (state.selected.kind !== "section" || state.selected.index < 0) return;
+    const item = state.sections[state.selected.index];
+    item.block = sectionBlockEl.value.trim() || "markdown";
+    item.id = sectionIdEl.value.trim() || undefined;
+    item.content = item.content && typeof item.content === "object" ? item.content : {};
+    item.content.title = sectionTitleEl.value;
+    item.disabled = sectionVisibleEl.value !== "1";
+    sectionJsonEl.value = JSON.stringify(item, null, 2);
+    renderSections();
+  };
+  sectionBlockEl.oninput = syncSectionFields;
+  sectionIdEl.oninput = syncSectionFields;
+  sectionTitleEl.oninput = syncSectionFields;
+  sectionVisibleEl.onchange = syncSectionFields;
+
+  sectionJsonEl.addEventListener("change", () => {
+    if (state.selected.kind !== "section" || state.selected.index < 0) return;
+    try {
+      const parsed = JSON.parse(sectionJsonEl.value || "{}");
+      state.sections[state.selected.index] = parsed;
+      selectEditor("section", state.selected.index);
+      renderSections();
+      showToast("模块模板 JSON 已应用");
+    } catch (err) {
+      st(`JSON 解析失败：${err.message}`, true, true);
+    }
+  });
+}
+
+async function loadData() {
+  try {
+    st(`正在加载 ${langLabel()} 数据...`);
+    localStorage.setItem("publisher_api_base", base());
+    localStorage.setItem("publisher_password", passwordEl.value);
+    const res = await fetch(`${base()}/home-modules?lang=${encodeURIComponent(state.lang)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "加载失败");
+    state.menuItems = Array.isArray(data.menuItems) ? data.menuItems : [];
+    state.sections = Array.isArray(data.sections) ? data.sections : [];
+    clearEditor();
+    renderAll();
+    st(`已加载 ${langLabel()}：${state.menuItems.length} 个菜单项，${state.sections.length} 个模块`, false, true);
+  } catch (err) {
+    st(err.message, true, true);
+  }
+}
+
+async function saveAll() {
+  try {
+    st(`正在保存 ${langLabel()} 配置...`, false, true);
+    saveBtn.disabled = true;
+    localStorage.setItem("publisher_api_base", base());
+    localStorage.setItem("publisher_password", passwordEl.value);
+    const res = await fetch(`${base()}/home-modules`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        password: passwordEl.value,
+        lang: state.lang,
+        menuItems: state.menuItems,
+        sections: state.sections,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "保存失败");
+    st(`保存成功\n${data.saved.homePath}\n${data.saved.menuPath}`, false, true);
+  } catch (err) {
+    st(err.message, true, true);
+  } finally {
+    saveBtn.disabled = false;
+  }
+}
+
+addMenuBtn.onclick = () => {
+  state.menuItems.push({
+    name: state.lang === "zh" ? "新菜单项" : "New Item",
+    identifier: `menu-${Date.now().toString(36)}`,
+    url: "/",
+    weight: (state.menuItems.length + 1) * 10,
+    hidden: false,
+  });
+  renderMenus();
+  selectEditor("menu", state.menuItems.length - 1);
+};
+
+addSectionBtn.onclick = () => {
+  state.sections.push({
+    block: "collection",
+    id: "",
+    disabled: false,
+    content: { title: state.lang === "zh" ? "新模块" : "New Section", filters: { folders: ["projects"] } },
+    design: { view: "article-grid", columns: 3 },
+  });
+  renderSections();
+  selectEditor("section", state.sections.length - 1);
+};
+
+langEnBtn.onclick = () => setLang("en");
+langZhBtn.onclick = () => setLang("zh");
+saveBtn.onclick = saveAll;
+bindEditors();
+loadData();
+</script>
+</body>
+</html>

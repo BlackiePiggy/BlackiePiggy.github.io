@@ -1,6 +1,6 @@
 <header id="site-header" class="header">
   <nav class="navbar px-3 flex justify-start">
-    <div class="order-0 h-full">
+    <div class="order-0 h-full lg:hidden">
       <a class="navbar-brand" href="{{ site.Home.RelPermalink }}" title="{{ site.Title }}">
         {{- $logo_filename := site.Params.header.navbar.logo.filename -}}
         {{ with $logo_filename }}
@@ -44,13 +44,18 @@
       </svg>
     </label>
 
-    {{ $align_menu := site.Params.header.navbar.align | default "center" }}
     <ul
       id="nav-menu"
       class="navbar-nav order-3 hidden lg:flex w-full pb-6 lg:order-1 lg:w-auto lg:space-x-2 lg:pb-0 xl:space-x-8 justify-start
-      {{ if in (slice "l" "left") $align_menu }}mr-auto ml-6{{ else if (in (slice "r" "right") $align_menu) }}ml-auto mr-6{{ end }}">
+      lg:justify-center mx-auto">
+      <li class="nav-item">
+        <a class="nav-link flex items-center" href="{{ site.Home.RelPermalink }}" title="{{ site.Title }}" aria-label="{{ site.Title }}">
+          <img src="{{ "favicon.svg" | relURL }}" alt="{{ site.Title }}" class="h-7 w-7" />
+        </a>
+      </li>
       {{ $currentPage := . }}
       {{ range site.Menus.main }}
+        {{ if .Params.hidden }}{{ continue }}{{ end }}
         {{ $menuURL := .URL | absLangURL }}
         {{ $pageURL := $currentPage.Permalink | absLangURL }}
         {{ $active := eq $menuURL $pageURL }}
@@ -73,6 +78,7 @@
             </span>
             <ul class="nav-dropdown-list lg:group-hover:visible lg:group-hover:opacity-100">
               {{ range .Children }}
+                {{ if .Params.hidden }}{{ continue }}{{ end }}
                 {{ $childURL := .URL | absLangURL }}
                 {{ $active := eq $childURL $pageURL }}
                 {{ $url := "" }}

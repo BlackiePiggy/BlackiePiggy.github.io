@@ -1,13 +1,5 @@
-# Languages
-#   Create a section for each of your site's languages.
-#   Documentation: https://docs.hugoblox.com/reference/language/
-
-# Default language
 en:
   languageCode: en-us
-  # Uncomment for multi-lingual sites, and move English content into `en` sub-folder.
-  #contentDir: content/en
-
 zh:
   languageCode: zh-Hans
   title: 李嘉渝 | BlackiePiggy
@@ -19,27 +11,41 @@ zh:
         identifier: 46a9df65
         url: /
         weight: 10
+        params:
+          hidden: false
+      - name: 经历
+        identifier: 6334c278
+        url: experience/
+        weight: 20
+        params:
+          hidden: false
+      - name: 项目
+        identifier: menu-mmpvag6r
+        url: projects/
+        weight: 30
+        params:
+          hidden: false
+      - name: 想法
+        identifier: idea
+        url: idea/
+        weight: 40
+        params:
+          hidden: false
       - name: 论文
         identifier: f31c7d6c
         url: /#papers
-        weight: 20
-      - name: 项目
-        identifier: d10d5827
-        url: /projects/
-        weight: 30
-      - name: 经历
-        identifier: 6334c278
-        url: /experience/
-        weight: 40
+        weight: 50
+        params:
+          hidden: false
       - name: 动态
         identifier: 7a7afbbd
         url: /#news
-        weight: 50
+        weight: 60
+        params:
+          hidden: false
       - name: 生活
         identifier: c0853a40
         url: /#talks
-        weight: 60
-      - name: 想法
-        identifier: idea
-        url: /idea/
         weight: 70
+        params:
+          hidden: false

@@ -1,34 +1,43 @@
-# Navigation Links
-#   To link a homepage widget, specify the URL as a hash `#` followed by the filename of the
-#     desired widget in your `content/home/` folder.
-#   The weight parameter defines the order that the links will appear in.
-
 main:
   - name: Bio
     identifier: 46a9df65
     url: /
     weight: 10
-  - name: Papers
-    identifier: f31c7d6c
-    url: /#papers
-    weight: 20
-  - name: Projects
-    identifier: d10d5827
-    url: projects/
-    weight: 30
+    params:
+      hidden: false
   - name: Experience
     identifier: 6334c278
     url: experience/
-    weight: 40
-  - name: News
-    identifier: 7a7afbbd
-    url: /#news
-    weight: 50
-  - name: Life
-    identifier: c0853a40
-    url: /#talks
-    weight: 60
+    weight: 20
+    params:
+      hidden: false
+  - name: Project
+    identifier: menu-mmpvag6r
+    url: projects/
+    weight: 30
+    params:
+      hidden: false
   - name: Idea
     identifier: idea
     url: idea/
+    weight: 40
+    params:
+      hidden: false
+  - name: Papers
+    identifier: f31c7d6c
+    url: /#papers
+    weight: 50
+    params:
+      hidden: false
+  - name: News
+    identifier: 7a7afbbd
+    url: /#news
+    weight: 60
+    params:
+      hidden: false
+  - name: Life
+    identifier: c0853a40
+    url: /#talks
     weight: 70
+    params:
+      hidden: false

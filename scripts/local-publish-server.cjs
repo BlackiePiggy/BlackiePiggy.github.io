@@ -14,6 +14,8 @@ const ARCHETYPES_DIR = path.join(ROOT, "archetypes");
 const AUTHOR_PROFILE_PATH = path.join(ROOT, "content", "authors", "admin", "_index.md");
 const EXPERIENCE_PAGE_PATH = path.join(ROOT, "content", "experience.md");
 const HOME_PAGE_PATH = path.join(ROOT, "content", "_index.md");
+const MENUS_PATH = path.join(ROOT, "config", "_default", "menus.yaml");
+const LANGUAGES_PATH = path.join(ROOT, "config", "_default", "languages.yaml");
 const AUTHOR_DIR = path.join(ROOT, "content", "authors", "admin");
 const ASSETS_MEDIA_DIR = path.join(ROOT, "assets", "media");
 
@@ -493,6 +495,22 @@ function writeFrontMatterFile(filePath, frontmatter, body = "") {
   fs.writeFileSync(filePath, output, "utf8");
 }
 
+function readYamlFile(filePath) {
+  if (!fs.existsSync(filePath)) return {};
+  const text = fs.readFileSync(filePath, "utf8");
+  return yaml.load(text) || {};
+}
+
+function writeYamlFile(filePath, data) {
+  const text = yaml.dump(data || {}, {
+    lineWidth: -1,
+    noRefs: true,
+    quotingType: '"',
+    forceQuotes: false,
+  });
+  fs.writeFileSync(filePath, text, "utf8");
+}
+
 function findFirstMatchingFile(dir, baseName) {
   if (!fs.existsSync(dir)) return "";
   const entries = fs.readdirSync(dir).sort();
@@ -610,6 +628,195 @@ function saveSiteProfile(payload, lang = "en") {
       experiencePath: path.relative(ROOT, experiencePath).replace(/\\/g, "/"),
       avatarFile,
       backgroundFile,
+    },
+  };
+}
+
+function sanitizeMenuItem(item, index) {
+  const fallbackId = crypto.createHash("sha1").update(`menu-item-${Date.now()}-${index}`).digest("hex").slice(0, 8);
+  const hiddenValue = item?.params && typeof item.params === "object" && Object.prototype.hasOwnProperty.call(item.params, "hidden")
+    ? item.params.hidden
+    : item?.hidden;
+  return {
+    name: String(item?.name || "").trim() || `Item ${index + 1}`,
+    identifier: String(item?.identifier || "").trim() || fallbackId,
+    url: String(item?.url || "").trim() || "/",
+    weight: Number.isFinite(Number(item?.weight)) ? Number(item.weight) : (index + 1) * 10,
+    hidden: Boolean(hiddenValue),
+  };
+}
+
+function sanitizeSectionItem(section, index) {
+  const out = section && typeof section === "object" ? JSON.parse(JSON.stringify(section)) : {};
+  out.block = String(out.block || "markdown").trim() || "markdown";
+  if (out.id != null) out.id = String(out.id);
+  out.disabled = Boolean(out.disabled);
+  out.sync_key = String(out.sync_key || out.__key || "").trim();
+  if (!out.sync_key) out.sync_key = `sec-${crypto.randomBytes(6).toString("hex")}`;
+  if (!out.content || typeof out.content !== "object" || Array.isArray(out.content)) out.content = {};
+  if (!out.design || typeof out.design !== "object" || Array.isArray(out.design)) out.design = {};
+  out.__key = String(out.__key || out.sync_key || `section-${index + 1}`);
+  return out;
+}
+
+function makeSectionFallbackKey(section) {
+  const id = String(section?.id || "").trim().toLowerCase();
+  if (id) return `id:${id}`;
+  const block = String(section?.block || "").trim().toLowerCase();
+  const title = String(section?.content?.title || "").trim().toLowerCase();
+  if (block || title) return `bt:${block}|${title}`;
+  return "";
+}
+
+function loadHomeModules(lang = "en") {
+  const normalizedLang = normalizeProfileLang(lang);
+  const homePath = localizedContentPath(HOME_PAGE_PATH, normalizedLang);
+  const home = readFrontMatterFile(homePath);
+  const sections = Array.isArray(home.frontmatter?.sections) ? home.frontmatter.sections.map((section, index) => sanitizeSectionItem(section, index)) : [];
+
+  let menuItems = [];
+  if (normalizedLang === "zh") {
+    const languages = readYamlFile(LANGUAGES_PATH);
+    const zhMain = languages?.zh?.menu?.main;
+    menuItems = Array.isArray(zhMain) ? zhMain : [];
+  } else {
+    const menus = readYamlFile(MENUS_PATH);
+    menuItems = Array.isArray(menus?.main) ? menus.main : [];
+  }
+  menuItems = menuItems.map((item, index) => sanitizeMenuItem(item, index));
+
+  return {
+    ok: true,
+    lang: normalizedLang,
+    homePath: path.relative(ROOT, homePath).replace(/\\/g, "/"),
+    sections,
+    menuItems,
+  };
+}
+
+function saveHomeModules(payload, lang = "en") {
+  const normalizedLang = normalizeProfileLang(lang);
+  const homePath = localizedContentPath(HOME_PAGE_PATH, normalizedLang);
+  const home = readFrontMatterFile(homePath);
+  const sectionsRaw = Array.isArray(payload?.sections) ? payload.sections : [];
+  const menuRaw = Array.isArray(payload?.menuItems) ? payload.menuItems : [];
+
+  const sourceSections = sectionsRaw.map((section, index) => {
+    const item = sanitizeSectionItem(section, index);
+    delete item.__key;
+    return item;
+  });
+  home.frontmatter = home.frontmatter || {};
+  home.frontmatter.sections = sourceSections;
+  writeFrontMatterFile(homePath, home.frontmatter, "");
+
+  const siblingLang = normalizedLang === "en" ? "zh" : "en";
+  const siblingHomePath = localizedContentPath(HOME_PAGE_PATH, siblingLang);
+  if (fs.existsSync(siblingHomePath)) {
+    const siblingHome = readFrontMatterFile(siblingHomePath);
+    const siblingSectionsRaw = Array.isArray(siblingHome.frontmatter?.sections) ? siblingHome.frontmatter.sections : [];
+    const siblingSections = siblingSectionsRaw.map((section, index) => sanitizeSectionItem(section, index));
+    const siblingMapBySync = new Map();
+    const siblingMapByFallback = new Map();
+    for (const item of siblingSections) {
+      siblingMapBySync.set(item.sync_key, item);
+      const fb = makeSectionFallbackKey(item);
+      if (fb && !siblingMapByFallback.has(fb)) siblingMapByFallback.set(fb, item);
+    }
+
+    const merged = sourceSections.map((source) => {
+      const sourceKey = String(source.sync_key || "").trim();
+      let existing = siblingMapBySync.get(sourceKey);
+      if (!existing) {
+        const sourceFallback = makeSectionFallbackKey(source);
+        if (sourceFallback) existing = siblingMapByFallback.get(sourceFallback);
+      }
+      if (!existing) return JSON.parse(JSON.stringify(source));
+
+      const kept = JSON.parse(JSON.stringify(existing));
+      kept.block = source.block;
+      kept.disabled = Boolean(source.disabled);
+      kept.sync_key = sourceKey;
+      if (source.id != null && String(source.id).trim() !== "") kept.id = String(source.id);
+      else delete kept.id;
+      delete kept.__key;
+      return kept;
+    });
+
+    siblingHome.frontmatter = siblingHome.frontmatter || {};
+    siblingHome.frontmatter.sections = merged;
+    writeFrontMatterFile(siblingHomePath, siblingHome.frontmatter, "");
+  }
+
+  const menuItems = menuRaw.map((item, index) => {
+    const normalized = sanitizeMenuItem(item, index);
+    normalized.weight = (index + 1) * 10;
+    return {
+      name: normalized.name,
+      identifier: normalized.identifier,
+      url: normalized.url,
+      weight: normalized.weight,
+      params: { hidden: normalized.hidden },
+    };
+  });
+
+  const siblingMenuPath = normalizedLang === "zh" ? MENUS_PATH : LANGUAGES_PATH;
+
+  if (normalizedLang === "zh") {
+    const languages = readYamlFile(LANGUAGES_PATH);
+    languages.zh = languages.zh || {};
+    languages.zh.menu = languages.zh.menu || {};
+    languages.zh.menu.main = menuItems;
+    writeYamlFile(LANGUAGES_PATH, languages);
+  } else {
+    const menus = readYamlFile(MENUS_PATH);
+    menus.main = menuItems;
+    writeYamlFile(MENUS_PATH, menus);
+  }
+
+  if (normalizedLang === "zh") {
+    const menus = readYamlFile(MENUS_PATH);
+    const siblingMain = Array.isArray(menus.main) ? menus.main.map((item, index) => sanitizeMenuItem(item, index)) : [];
+    const siblingById = new Map(siblingMain.map((item) => [item.identifier, item]));
+    menus.main = menuItems.map((item, index) => {
+      const hit = siblingById.get(item.identifier);
+      const name = hit ? hit.name : item.name;
+      return {
+        name,
+        identifier: item.identifier,
+        url: item.url,
+        weight: (index + 1) * 10,
+        params: { hidden: Boolean(item.params && item.params.hidden) },
+      };
+    });
+    writeYamlFile(MENUS_PATH, menus);
+  } else {
+    const languages = readYamlFile(LANGUAGES_PATH);
+    languages.zh = languages.zh || {};
+    languages.zh.menu = languages.zh.menu || {};
+    const siblingMain = Array.isArray(languages.zh.menu.main) ? languages.zh.menu.main.map((item, index) => sanitizeMenuItem(item, index)) : [];
+    const siblingById = new Map(siblingMain.map((item) => [item.identifier, item]));
+    languages.zh.menu.main = menuItems.map((item, index) => {
+      const hit = siblingById.get(item.identifier);
+      const name = hit ? hit.name : item.name;
+      return {
+        name,
+        identifier: item.identifier,
+        url: item.url,
+        weight: (index + 1) * 10,
+        params: { hidden: Boolean(item.params && item.params.hidden) },
+      };
+    });
+    writeYamlFile(LANGUAGES_PATH, languages);
+  }
+
+  return {
+    ok: true,
+    saved: {
+      lang: normalizedLang,
+      homePath: path.relative(ROOT, homePath).replace(/\\/g, "/"),
+      menuPath: path.relative(ROOT, normalizedLang === "zh" ? LANGUAGES_PATH : MENUS_PATH).replace(/\\/g, "/"),
+      siblingMenuPath: path.relative(ROOT, siblingMenuPath).replace(/\\/g, "/"),
     },
   };
 }
@@ -734,6 +941,15 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  if (req.method === "GET" && u.pathname === "/home-modules") {
+    try {
+      const lang = normalizeProfileLang(u.searchParams.get("lang"));
+      return send(res, 200, loadHomeModules(lang));
+    } catch (err) {
+      return send(res, 500, { error: err.message || String(err) });
+    }
+  }
+
   if (req.method === "GET" && u.pathname === "/site-profile/asset") {
     try {
       const kind = String(u.searchParams.get("kind") || "");
@@ -764,6 +980,7 @@ const server = http.createServer((req, res) => {
     u.pathname !== "/delete" &&
     u.pathname !== "/template-file" &&
     u.pathname !== "/site-profile" &&
+    u.pathname !== "/home-modules" &&
     u.pathname !== "/api/oss/test" &&
     u.pathname !== "/api/media/replace" &&
     u.pathname !== "/api/media/upload-one"
@@ -805,6 +1022,12 @@ const server = http.createServer((req, res) => {
       if (u.pathname === "/site-profile") {
         if (payload.password !== PASSWORD) return send(res, 401, { error: "密码错误" });
         const result = saveSiteProfile(payload, payload.lang);
+        return send(res, 200, result);
+      }
+
+      if (u.pathname === "/home-modules") {
+        if (payload.password !== PASSWORD) return send(res, 401, { error: "密码错误" });
+        const result = saveHomeModules(payload, payload.lang);
         return send(res, 200, result);
       }
 
