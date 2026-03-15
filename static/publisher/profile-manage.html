@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BlackiePiggy CMS | 主页资料</title>
+  <title>Site Template CMS | 主页资料</title>
   <link rel="icon" type="image/svg+xml" href="/publisher/favicon.svg" />
   <style>
     :root{--bg:#eef2f7;--panel:#fff;--line:#d7dee7;--text:#15202b;--muted:#637282;--brand:#0f766e;--brand2:#1e9b86;--danger:#b91c1c;--chip:#e7f6f2}
@@ -445,6 +445,44 @@ function closeConfirm(result) {
 
 function base() {
   return apiBaseInput.value.replace(/\/+$/, "");
+}
+
+function apiJoin(baseUrl, path) {
+  return `${String(baseUrl || "").replace(/\/+$/, "")}${path}`;
+}
+
+function apiCandidates() {
+  const fromInput = base();
+  const fromStorage = String(localStorage.getItem("publisher_api_base") || "").replace(/\/+$/, "");
+  const defaults = local ? ["http://127.0.0.1:8790", "http://127.0.0.1:8788"] : [];
+  const merged = [fromInput, fromStorage, ...defaults].filter(Boolean);
+  return [...new Set(merged)];
+}
+
+async function pingApiBase(baseUrl) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 1500);
+  try {
+    const res = await fetch(apiJoin(baseUrl, "/templates"), { method: "GET", signal: controller.signal, cache: "no-store" });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function ensureApiBase() {
+  const candidates = apiCandidates();
+  for (const candidate of candidates) {
+    // eslint-disable-next-line no-await-in-loop
+    const ok = await pingApiBase(candidate);
+    if (!ok) continue;
+    apiBaseInput.value = candidate;
+    localStorage.setItem("publisher_api_base", candidate);
+    return candidate;
+  }
+  throw new Error(`无法连接本地 API。请确认已启动 publisher API（尝试地址：${candidates.join(" / ")}）。`);
 }
 
 function api(path) {
@@ -999,9 +1037,10 @@ function splitAuthorProfile(profile) {
 
 async function loadProfile() {
   st("正在读取中英文主页资料...", false, true);
+  const apiBase = await ensureApiBase();
   const [enRes, zhRes] = await Promise.all([
-    fetch(`${api("/site-profile")}?lang=en`),
-    fetch(`${api("/site-profile")}?lang=zh`)
+    fetch(`${apiJoin(apiBase, "/site-profile")}?lang=en`,{cache:"no-store"}),
+    fetch(`${apiJoin(apiBase, "/site-profile")}?lang=zh`,{cache:"no-store"})
   ]);
   const [enJson, zhJson] = await Promise.all([enRes.json(), zhRes.json()]);
   if (!enRes.ok) throw new Error(enJson.error || "英文资料读取失败");
@@ -1034,8 +1073,8 @@ async function loadProfile() {
   aboutMeDual.appendChild(renderDualPrimitive("about_me", enJson.profile.authorBody || "", zhJson.profile.authorBody || "", "authorBody"));
 
   const assets = enJson.profile.assets || zhJson.profile.assets || {};
-  const avatarSrc = assets.hasAvatar ? `${api("/site-profile/asset?kind=avatar&lang=en")}&t=${Date.now()}` : "";
-  const bgSrc = assets.hasBackground ? `${api("/site-profile/asset?kind=background&lang=en")}&t=${Date.now()}` : "";
+  const avatarSrc = assets.hasAvatar ? `${apiJoin(apiBase, "/site-profile/asset?kind=avatar&lang=en")}&t=${Date.now()}` : "";
+  const bgSrc = assets.hasBackground ? `${apiJoin(apiBase, "/site-profile/asset?kind=background&lang=en")}&t=${Date.now()}` : "";
   if (avatarSrc) setPreview(avatarPreviewEl, avatarSrc, "当前未读取到头像");
   else setEmptyPreview(avatarPreviewEl, "拖拽图片到这里，或使用下方文件选择");
   if (bgSrc) setPreview(backgroundPreviewEl, bgSrc, "当前未读取到背景图");
@@ -1046,13 +1085,14 @@ async function loadProfile() {
 }
 
 async function saveProfile() {
+  const apiBase = await ensureApiBase();
   const authorByLang = collectRootDual(authorRootEl);
   const resumeByLang = collectRootDual(resumeRootEl);
   const homeEditedByLang = collectRootDual(homeRootEl);
   const experienceByLang = collectRootDual(experienceRootEl);
   const aboutByLang = collectRootDual(document.getElementById("aboutMeDualHost"));
 
-  localStorage.setItem("publisher_api_base", base());
+  localStorage.setItem("publisher_api_base", apiBase);
   localStorage.setItem("publisher_password", passwordInput.value);
   const saveLang = async (lang, withAssets) => {
     const authorFrontmatter = clone(authorByLang[lang] || {});
@@ -1084,7 +1124,7 @@ async function saveProfile() {
         base64: state.backgroundUpload.base64,
       } : null,
     };
-    const res = await fetch(api("/site-profile"), {
+    const res = await fetch(apiJoin(apiBase, "/site-profile"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

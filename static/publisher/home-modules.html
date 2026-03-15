@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BlackiePiggy CMS | 首页模块管理</title>
+  <title>Site Template CMS | 首页模块管理</title>
   <link rel="icon" type="image/svg+xml" href="/publisher/favicon.svg" />
   <style>
     :root{--bg:#eef2f7;--panel:#fff;--line:#d7dee7;--text:#15202b;--muted:#637282;--brand:#0f766e;--brand2:#1e9b86;--soft:#effaf5;--danger:#b91c1c}
@@ -226,6 +226,40 @@ function st(msg, isError = false, notify = false) {
 }
 function base() {
   return apiBaseEl.value.replace(/\/+$/, "");
+}
+function apiJoin(baseUrl, path) {
+  return `${String(baseUrl || "").replace(/\/+$/, "")}${path}`;
+}
+function apiCandidates() {
+  const fromInput = base();
+  const fromStorage = String(localStorage.getItem("publisher_api_base") || "").replace(/\/+$/, "");
+  const defaults = local ? ["http://127.0.0.1:8790", "http://127.0.0.1:8788"] : [];
+  const merged = [fromInput, fromStorage, ...defaults].filter(Boolean);
+  return [...new Set(merged)];
+}
+async function pingApiBase(baseUrl) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 1500);
+  try {
+    const res = await fetch(apiJoin(baseUrl, "/templates"), { method: "GET", signal: controller.signal, cache: "no-store" });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+async function ensureApiBase() {
+  const candidates = apiCandidates();
+  for (const candidate of candidates) {
+    // eslint-disable-next-line no-await-in-loop
+    const ok = await pingApiBase(candidate);
+    if (!ok) continue;
+    apiBaseEl.value = candidate;
+    localStorage.setItem("publisher_api_base", candidate);
+    return candidate;
+  }
+  throw new Error(`无法连接本地 API。请确认已启动 publisher API（尝试地址：${candidates.join(" / ")}）。`);
 }
 function deepClone(v) {
   return JSON.parse(JSON.stringify(v));
@@ -533,10 +567,11 @@ function bindEditors() {
 
 async function loadData() {
   try {
+    const apiBase = await ensureApiBase();
     st(`正在加载 ${langLabel()} 数据...`);
-    localStorage.setItem("publisher_api_base", base());
+    localStorage.setItem("publisher_api_base", apiBase);
     localStorage.setItem("publisher_password", passwordEl.value);
-    const res = await fetch(`${base()}/home-modules?lang=${encodeURIComponent(state.lang)}`);
+    const res = await fetch(`${apiJoin(apiBase, "/home-modules")}?lang=${encodeURIComponent(state.lang)}`,{cache:"no-store"});
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "加载失败");
     state.menuItems = Array.isArray(data.menuItems) ? data.menuItems : [];
@@ -551,11 +586,12 @@ async function loadData() {
 
 async function saveAll() {
   try {
+    const apiBase = await ensureApiBase();
     st(`正在保存 ${langLabel()} 配置...`, false, true);
     saveBtn.disabled = true;
-    localStorage.setItem("publisher_api_base", base());
+    localStorage.setItem("publisher_api_base", apiBase);
     localStorage.setItem("publisher_password", passwordEl.value);
-    const res = await fetch(`${base()}/home-modules`, {
+    const res = await fetch(apiJoin(apiBase, "/home-modules"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

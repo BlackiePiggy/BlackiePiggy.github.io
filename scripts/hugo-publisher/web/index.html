@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hugo 可视化发帖</title>
+  <style>
+    :root { --bg:#f6f7fb; --panel:#fff; --line:#d8dce6; --text:#1f2937; --muted:#6b7280; --primary:#14532d; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:"Microsoft YaHei",sans-serif; background:linear-gradient(135deg,#f3f4f6,#e8f4ea); color:var(--text); }
+    .wrap { max-width:980px; margin:24px auto; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px; }
+    h1 { margin:0 0 14px; font-size:24px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    label { display:block; font-size:13px; font-weight:700; margin-bottom:4px; }
+    input,select,textarea { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+    textarea { min-height:76px; resize:vertical; }
+    .field { margin-bottom:10px; }
+    .tag { font-size:12px; color:#fff; background:#b91c1c; border-radius:999px; padding:2px 8px; margin-left:8px; }
+    .hint { font-size:12px; color:var(--muted); white-space:pre-wrap; }
+    .row { margin:14px 0; }
+    .drop {
+      border:2px dashed #9ca3af; border-radius:10px; min-height:110px; display:flex; align-items:center; justify-content:center;
+      color:#374151; background:#fcfcfd; text-align:center; padding:10px;
+    }
+    .drop img { max-height:140px; max-width:100%; border-radius:8px; }
+    button { background:var(--primary); color:#fff; border:none; border-radius:8px; padding:10px 16px; cursor:pointer; font-weight:700; }
+    .muted { color:var(--muted); font-size:13px; }
+    .status { margin-top:12px; white-space:pre-wrap; }
+    @media (max-width:780px){ .grid{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Hugo 可视化发帖</h1>
+    <div class="grid">
+      <div class="field">
+        <label>内容类型（archetype）</label>
+        <select id="archetype"></select>
+      </div>
+      <div class="field">
+        <label>目标 Section（例如 projects / post / publications）</label>
+        <input id="section" placeholder="默认跟 archetype 同名" />
+      </div>
+      <div class="field">
+        <label>Slug（目录名）</label>
+        <input id="slug" placeholder="不填则自动由标题生成" />
+      </div>
+    </div>
+
+    <div id="fields"></div>
+
+    <div class="row">
+      <label>正文（Markdown）</label>
+      <textarea id="body" style="min-height:180px;"></textarea>
+    </div>
+
+    <div class="row">
+      <label>Feature 图（可粘贴 Ctrl+V，或点击上传）</label>
+      <div id="drop" class="drop">点击此处上传，或直接粘贴图片</div>
+      <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" style="display:none" />
+      <div class="muted" id="imgMeta"></div>
+    </div>
+
+    <button id="submit">发布新文章</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <script>
+    const el = (id) => document.getElementById(id);
+    const state = { archetypes: [], current: null, featured: null };
+
+    async function loadArchetypes() {
+      const res = await fetch('/api/archetypes');
+      const data = await res.json();
+      state.archetypes = data.archetypes || [];
+      const sel = el('archetype');
+      sel.innerHTML = state.archetypes.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+      sel.onchange = () => renderFor(sel.value);
+      renderFor(sel.value || state.archetypes[0]?.name);
+    }
+
+    function createInput(field) {
+      const id = `f_${field.key}`;
+      const required = field.required ? '<span class="tag">必选</span>' : '';
+      const hint = field.hint ? `<div class="hint">${field.hint}</div>` : '';
+      const val = field.defaultBlock || field.defaultInline || '';
+
+      if (field.type === 'boolean') {
+        const checked = String(val).trim() === 'true' ? 'checked' : '';
+        return `<div class="field"><label>${field.key}${required}</label><input type="checkbox" id="${id}" ${checked}/>${hint}</div>`;
+      }
+      if (field.type === 'yaml' || field.type === 'list') {
+        return `<div class="field"><label>${field.key}${required}</label><textarea id="${id}">${val}</textarea>${hint}</div>`;
+      }
+      const type = field.type === 'datetime' ? 'datetime-local' : 'text';
+      const v = String(val).replace(/^['"]|['"]$/g,'');
+      return `<div class="field"><label>${field.key}${required}</label><input type="${type}" id="${id}" value="${escapeHtml(v)}"/>${hint}</div>`;
+    }
+
+    function renderFor(name) {
+      const a = state.archetypes.find(x => x.name === name);
+      state.current = a;
+      if (!a) return;
+      el('section').value = a.suggestedSection || a.name;
+      el('body').value = a.bodyTemplate || '';
+      el('fields').innerHTML = a.fields.map(createInput).join('');
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function setImage(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        state.featured = { filename: file.name, dataUrl: reader.result };
+        el('drop').innerHTML = `<img src="${reader.result}" alt="featured" />`;
+        el('imgMeta').textContent = `已选择: ${file.name} (${Math.round(file.size/1024)} KB)`;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    el('drop').addEventListener('click', () => el('fileInput').click());
+    el('fileInput').addEventListener('change', (e) => setImage(e.target.files[0]));
+    document.addEventListener('paste', (e) => {
+      for (const item of (e.clipboardData?.items || [])) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) setImage(file);
+          e.preventDefault();
+          break;
+        }
+      }
+    });
+
+    el('submit').addEventListener('click', async () => {
+      if (!state.current) return;
+      const values = {};
+      for (const f of state.current.fields) {
+        const node = el(`f_${f.key}`);
+        if (!node) continue;
+        values[f.key] = f.type === 'boolean' ? String(node.checked) : node.value;
+      }
+
+      const payload = {
+        archetype: state.current.name,
+        section: el('section').value,
+        slug: el('slug').value,
+        body: el('body').value,
+        values,
+        featured: state.featured,
+      };
+
+      const status = el('status');
+      status.textContent = '发布中...';
+      const res = await fetch('/api/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        status.textContent = `失败: ${data.error || 'unknown error'}`;
+        return;
+      }
+      status.textContent = `成功创建: ${data.path}`;
+    });
+
+    loadArchetypes().catch(err => {
+      el('status').textContent = `初始化失败: ${err.message}`;
+    });
+  </script>
+</body>
+</html>

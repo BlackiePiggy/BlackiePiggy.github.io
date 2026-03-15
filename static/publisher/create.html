@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BlackiePiggy CMS | 新建发布</title>
+  <title>Site Template CMS | 新建发布</title>
   <link rel="icon" type="image/svg+xml" href="/publisher/favicon.svg" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="/publisher/publisher-media-tools.js"></script>
   <style>
     :root{--bg:#eef2f7;--panel:#fff;--line:#d7dee7;--text:#15202b;--muted:#637282;--brand:#0f766e;--brand2:#1e9b86;--danger:#b91c1c}
-    *{box-sizing:border-box} body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text)}
     .layout{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
     .side{position:sticky;top:0;height:100vh;overflow-y:auto;background:linear-gradient(160deg,#0d3e39,#0b2e32);color:#dff7f4;padding:20px}
     .brand{font-size:20px;font-weight:700;margin-bottom:20px}
@@ -16,23 +18,32 @@
     .nav a.active,.nav a:hover{background:rgba(255,255,255,.14)}
     .main{padding:18px}
     .top{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px}
-    .top h1{margin:0 0 6px}.muted{color:var(--muted);font-size:13px}
+    .top h1{margin:0 0 6px}
+    .muted{color:var(--muted);font-size:13px}
     .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
     input,select,textarea,button{width:100%;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px;font-size:14px}
-    textarea{min-height:160px}.btn{border:none;background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff;cursor:pointer}
-    .obj,.list-item{border:1px dashed var(--line);border-radius:10px;padding:8px;margin:8px 0}.inline{display:flex;gap:8px}.inline>*{width:auto}
+    textarea{min-height:180px}
+    .btn{border:none;background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff;cursor:pointer}
+    .obj,.list-item{border:1px dashed var(--line);border-radius:10px;padding:8px;margin:8px 0}
+    .inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .inline>*{width:auto}
     .md-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .md-preview{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fbfdff;min-height:160px;overflow:auto}
+    .md-preview{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fbfdff;min-height:180px;overflow:auto}
     .md-preview img{display:block;width:80%;max-width:80%;height:auto;margin:10px auto}
-    .preview{max-width:220px;border:1px solid var(--line);border-radius:10px;display:none}.status{white-space:pre-wrap;font-size:13px}
+    .toolbox{margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px;background:#f8fbff}
+    .toolbox-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
+    .toolbox-status{margin-top:8px;font-size:12px;color:var(--muted)}
+    .preview{max-width:220px;border:1px solid var(--line);border-radius:10px;display:none}
+    .status{white-space:pre-wrap;font-size:13px}
     .toast-stack{position:fixed;right:18px;top:18px;display:flex;flex-direction:column;gap:10px;z-index:9999;pointer-events:none}
     .toast{min-width:220px;max-width:360px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--text);box-shadow:0 12px 30px rgba(21,32,43,.12);opacity:0;transform:translateY(8px);animation:toast-in .18s ease forwards}
     .toast.ok{border-color:#b7e4d7;background:#effaf5;color:#065f46}.toast.err{border-color:#efb6b6;background:#fff5f5;color:#b91c1c}
     .toast.fade-out{animation:toast-out .22s ease forwards}
     @keyframes toast-in{to{opacity:1;transform:translateY(0)}}
     @keyframes toast-out{to{opacity:0;transform:translateY(8px)}}
-    @media (max-width:980px){.layout{grid-template-columns:1fr}.side{position:relative;height:auto;padding:14px}.grid{grid-template-columns:1fr}.md-grid{grid-template-columns:1fr}}
+    @media (max-width:980px){.layout{grid-template-columns:1fr}.side{position:relative;height:auto;padding:14px}.grid,.md-grid,.toolbox-row{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -46,6 +57,7 @@
       <a href="/publisher/create.html" class="active">新建发布</a>
       <a href="/publisher/manage.html">内容管理</a>
       <a href="/publisher/media-upload.html">Media Upload</a>
+      <a href="/publisher/oss-config.html">OSS 配置</a>
       <a href="/publisher/template-manage.html">模板管理</a>
     </nav>
   </aside>
@@ -53,7 +65,7 @@
   <main class="main">
     <section class="top">
       <h1>新建发布</h1>
-      <div class="muted">按模板快速创建新内容，支持 featured 图上传/粘贴。</div>
+      <div class="muted">按模板快速创建内容，支持 Featured 图上传、富文本粘贴与正文 media 一键替换 OSS 链接。</div>
     </section>
 
     <section class="panel">
@@ -75,58 +87,597 @@
 </div>
 
 <script>
-let templates=[],featuredData=null;
-const DRAFT_KEY="publisher_create_draft_v1";
-const local=["localhost","127.0.0.1"].includes(location.hostname);
-const apiBaseInput=document.getElementById("apiBase");
-const passwordInput=document.getElementById("password");
-const templateSelect=document.getElementById("template");
-const slugInput=document.getElementById("slug");
-const featuredFileInput=document.getElementById("featuredFile");
-const previewImg=document.getElementById("preview");
-const formRootEl=document.getElementById("formRoot");
-const submitBtnEl=document.getElementById("submitBtn");
-const statusEl=document.getElementById("status");
-const toastStackEl=document.body.appendChild(document.createElement("div"));
-toastStackEl.className="toast-stack";
-apiBaseInput.value=localStorage.getItem("publisher_api_base")||(local?"http://127.0.0.1:8790":"");
-passwordInput.value=localStorage.getItem("publisher_password")||(local?"123456":"");
-const nowIso=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0"),o=-d.getTimezoneOffset(),s=o>=0?"+":"-";return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}${s}${p(Math.floor(Math.abs(o)/60))}:${p(Math.abs(o)%60)}`};
-const slugify=s=>String(s||"").toLowerCase().trim().replace(/[\s_]+/g,"-").replace(/[^a-z0-9-]/g,"").replace(/-+/g,"-").replace(/^-|-$/g,"");
-const e=(t,a={},c=[])=>{const n=document.createElement(t);Object.entries(a).forEach(([k,v])=>k==="text"?n.textContent=v:n.setAttribute(k,v));c.forEach(x=>n.appendChild(x));return n};
-const READING_WORDS_PER_MIN=200;
-function showToast(message,isError=false){if(!message)return;const toast=e("div",{class:`toast ${isError?"err":"ok"}`,text:message});toastStackEl.appendChild(toast);setTimeout(()=>{toast.classList.add("fade-out");setTimeout(()=>toast.remove(),220);},1800);}
-const st=(m,e=false,notify=false)=>{statusEl.style.color=e?"#b91c1c":"#065f46";statusEl.textContent=m;if(notify)showToast(String(m).split("\n")[0],e)};
-const setByPath=(o,p,v)=>{const ps=p.replace(/\[(\d+)\]/g,".$1").split(".");let cur=o;ps.forEach((k,i)=>{if(i===ps.length-1)cur[k]=v;else{if(cur[k]==null)cur[k]=/^\d+$/.test(ps[i+1])?[]:{};cur=cur[k];}})};
-const readDraft=()=>{try{return JSON.parse(sessionStorage.getItem(DRAFT_KEY)||"null")}catch{return null}};
-const clearDraft=()=>sessionStorage.removeItem(DRAFT_KEY);
-function saveDraft(){try{sessionStorage.setItem(DRAFT_KEY,JSON.stringify({apiBase:apiBaseInput.value,password:passwordInput.value,template:templateSelect.value,slug:slugInput.value,formData:collect()}))}catch{}}
-function applyDraftValues(data,prefix=""){Object.entries(data||{}).forEach(([key,value])=>{const path=prefix?`${prefix}.${key}`:key;if(Array.isArray(value)){value.forEach((item,index)=>{if(item&&typeof item==="object")applyDraftValues(item,`${path}[${index}]`);else{const el=document.querySelector(`[data-path="${path}[${index}]"]`);if(el&&item!=null)el.value=item;}});return;}if(value&&typeof value==="object"){applyDraftValues(value,path);return;}const el=document.querySelector(`[data-path="${path}"]`);if(!el)return;if(el.type==="checkbox")el.checked=!!value;else if(el.type==="datetime-local"&&typeof value==="string")el.value=value.slice(0,16);else if(value!=null)el.value=value;})}
-function restoreDraft(){const d=readDraft();if(!d)return false;apiBaseInput.value=d.apiBase||apiBaseInput.value;passwordInput.value=d.password||passwordInput.value;if(d.template&&templates.some(t=>t.name===d.template))templateSelect.value=d.template;renderForm(templateSelect.value);bindBodyPreview();slugInput.value=d.slug||"";applyDraftValues(d.formData||{});bindBodyPreview();return true;}
-function renderField(f,path){
-  if(f.type==="object"){const b=e("div",{class:"obj"});b.appendChild(e("label",{text:f.name}));(f.fields||[]).forEach(s=>b.appendChild(renderField(s,`${path}.${s.name}`)));return b;}
-  if(f.type==="list"){const b=e("div",{class:"field"});b.appendChild(e("label",{text:f.name}));const r=e("div");const add=e("button",{type:"button",text:"添加一项"});add.onclick=()=>{const i=e("div",{class:"list-item"}),idx=r.children.length;if(f.itemType==="object")(f.fields||[]).forEach(s=>i.appendChild(renderField(s,`${path}[${idx}].${s.name}`)));else i.appendChild(renderField({name:"item",type:f.itemType||"string"},`${path}[${idx}]`));const rm=e("button",{type:"button",text:"删除"});rm.onclick=()=>i.remove();i.appendChild(rm);r.appendChild(i)};b.appendChild(r);b.appendChild(add);return b;}
-  const b=e("div",{class:"field"});b.appendChild(e("label",{text:f.name}));
-  if(f.name==="body"){const wrap=e("div",{class:"md-grid"});const ta=e("textarea",{"data-path":path,"data-md":"1"});if(f.default)ta.value=f.default;const pv=e("div",{class:"md-preview","data-preview-for":path});wrap.appendChild(ta);wrap.appendChild(pv);b.appendChild(wrap);const tools=e("div",{class:"inline",style:"margin-top:8px;align-items:center;flex-wrap:wrap"});const calcBtn=e("button",{type:"button",text:"计算阅读信息"});calcBtn.onclick=()=>updateReadingMetricsFromBody(path);const calcResult=e("span",{"data-reading-result-for":path,text:""});calcResult.style.fontSize="12px";calcResult.style.color="var(--muted)";tools.appendChild(calcBtn);tools.appendChild(calcResult);b.appendChild(tools);if(!document.querySelector('[data-path="word_count"]')){const wc=e("input",{type:"number","data-path":"word_count"});wc.hidden=true;b.appendChild(wc);}if(!document.querySelector('[data-path="reading_time"]')){const rt=e("input",{type:"number","data-path":"reading_time"});rt.hidden=true;b.appendChild(rt);}return b;}
-  const type=f.type==="datetime"?"datetime-local":(f.type==="number"?"number":(f.type==="boolean"?"checkbox":"text"));
-  const input=e("input",{type,"data-path":path});if(f.default!=null){if(type==="checkbox")input.checked=!!f.default;else if(type==="datetime-local")input.value=String(f.default).slice(0,16);else input.value=f.default;}
-  if(f.type==="datetime"){const w=e("div",{class:"inline"}),btn=e("button",{type:"button",text:"当前时刻"});btn.onclick=()=>input.value=nowIso().slice(0,16);w.appendChild(input);w.appendChild(btn);b.appendChild(w);} else b.appendChild(input);
+let templates = [];
+let featuredData = null;
+const tools = window.PublisherMediaTools;
+const DRAFT_KEY = "publisher_create_draft_v2";
+const READING_WORDS_PER_MIN = 200;
+const local = ["localhost", "127.0.0.1"].includes(location.hostname);
+
+const apiBaseInput = document.getElementById("apiBase");
+const passwordInput = document.getElementById("password");
+const templateSelect = document.getElementById("template");
+const slugInput = document.getElementById("slug");
+const featuredFileInput = document.getElementById("featuredFile");
+const previewImg = document.getElementById("preview");
+const formRootEl = document.getElementById("formRoot");
+const submitBtnEl = document.getElementById("submitBtn");
+const statusEl = document.getElementById("status");
+
+const toastStackEl = document.body.appendChild(document.createElement("div"));
+toastStackEl.className = "toast-stack";
+
+apiBaseInput.value = localStorage.getItem("publisher_api_base") || (local ? "http://127.0.0.1:8790" : "");
+passwordInput.value = localStorage.getItem("publisher_password") || (local ? "123456" : "");
+
+const nowIso = () => {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  const o = -d.getTimezoneOffset();
+  const s = o >= 0 ? "+" : "-";
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}${s}${p(Math.floor(Math.abs(o) / 60))}:${p(Math.abs(o) % 60)}`;
+};
+
+const slugify = (s) => String(s || "").toLowerCase().trim().replace(/[\s_]+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-").replace(/^-|-$/g, "");
+const e = (t, a = {}, c = []) => {
+  const n = document.createElement(t);
+  Object.entries(a).forEach(([k, v]) => (k === "text" ? (n.textContent = v) : n.setAttribute(k, v)));
+  c.forEach((x) => n.appendChild(x));
+  return n;
+};
+
+function showToast(message, isError = false) {
+  if (!message) return;
+  const toast = e("div", { class: `toast ${isError ? "err" : "ok"}`, text: message });
+  toastStackEl.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add("fade-out");
+    setTimeout(() => toast.remove(), 220);
+  }, 1800);
+}
+
+function setStatus(message, isError = false, notify = false) {
+  statusEl.style.color = isError ? "#b91c1c" : "#065f46";
+  statusEl.textContent = message;
+  if (notify) showToast(String(message).split("\n")[0], isError);
+}
+
+function setByPath(obj, path, value) {
+  const parts = path.replace(/\[(\d+)\]/g, ".$1").split(".");
+  let cur = obj;
+  parts.forEach((key, i) => {
+    if (i === parts.length - 1) {
+      cur[key] = value;
+    } else {
+      if (cur[key] == null) cur[key] = /^\d+$/.test(parts[i + 1]) ? [] : {};
+      cur = cur[key];
+    }
+  });
+}
+
+function readDraft() {
+  try { return JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "null"); } catch { return null; }
+}
+
+function clearDraft() { sessionStorage.removeItem(DRAFT_KEY); }
+
+function collect() {
+  const out = {};
+  document.querySelectorAll("[data-path]").forEach((el) => {
+    const p = el.dataset.path;
+    let v;
+    if (el.type === "checkbox") v = el.checked;
+    else if (el.type === "number") v = el.value === "" ? null : Number(el.value);
+    else if (el.type === "datetime-local") v = el.value ? `${el.value}:00${nowIso().slice(-6)}` : "";
+    else v = el.value;
+    if (v !== "" && v !== null) setByPath(out, p, v);
+  });
+  return out;
+}
+
+function collectBodyToolState() {
+  const map = {};
+  document.querySelectorAll("[data-body-tool-for]").forEach((box) => {
+    const key = box.dataset.bodyToolFor;
+    const profile = box.querySelector("[data-oss-profile]");
+    const folder = box.querySelector("[data-folder-mode]");
+    const custom = box.querySelector("[data-custom-dir]");
+    map[key] = {
+      profile: profile ? profile.value : "",
+      folderMode: folder ? folder.value : "time_flat",
+      customDir: custom ? custom.value : "",
+    };
+  });
+  return map;
+}
+
+function saveDraft() {
+  try {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+      apiBase: apiBaseInput.value,
+      password: passwordInput.value,
+      template: templateSelect.value,
+      slug: slugInput.value,
+      formData: collect(),
+      bodyToolState: collectBodyToolState(),
+    }));
+  } catch {}
+}
+
+function applyDraftValues(data, prefix = "") {
+  Object.entries(data || {}).forEach(([key, value]) => {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (Array.isArray(value)) {
+      value.forEach((item, index) => {
+        if (item && typeof item === "object") applyDraftValues(item, `${path}[${index}]`);
+        else {
+          const el = document.querySelector(`[data-path="${path}[${index}]"]`);
+          if (el && item != null) el.value = item;
+        }
+      });
+      return;
+    }
+    if (value && typeof value === "object") {
+      applyDraftValues(value, path);
+      return;
+    }
+    const el = document.querySelector(`[data-path="${path}"]`);
+    if (!el) return;
+    if (el.type === "checkbox") el.checked = !!value;
+    else if (el.type === "datetime-local" && typeof value === "string") el.value = value.slice(0, 16);
+    else if (value != null) el.value = value;
+  });
+}
+
+function restoreBodyToolState(stateMap) {
+  Object.entries(stateMap || {}).forEach(([path, cfg]) => {
+    const box = document.querySelector(`[data-body-tool-for="${path}"]`);
+    if (!box) return;
+    const profile = box.querySelector("[data-oss-profile]");
+    const folder = box.querySelector("[data-folder-mode]");
+    const custom = box.querySelector("[data-custom-dir]");
+    if (profile && cfg.profile) profile.value = cfg.profile;
+    if (folder && cfg.folderMode) folder.value = cfg.folderMode;
+    if (custom && cfg.customDir) custom.value = cfg.customDir;
+    const customWrap = box.querySelector("[data-custom-wrap]");
+    if (customWrap) customWrap.style.display = folder && folder.value === "custom" ? "block" : "none";
+  });
+}
+
+function refreshProfileSelect(selectEl, selected) {
+  const names = tools.listProfiles();
+  selectEl.innerHTML = "";
+  const empty = document.createElement("option");
+  empty.value = "";
+  empty.textContent = names.length ? "请选择 OSS 配置档" : "暂无配置，请前往 OSS 配置页";
+  selectEl.appendChild(empty);
+  names.forEach((name) => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    selectEl.appendChild(opt);
+  });
+  if (selected && names.includes(selected)) selectEl.value = selected;
+}
+
+function escapeHtml(s) {
+  return String(s || "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+}
+
+function renderMarkdown(md) {
+  if (window.marked && window.marked.parse) return window.marked.parse(md || "");
+  return `<pre>${escapeHtml(md || "")}</pre>`;
+}
+
+function countWordsFromBody(text) {
+  const src = String(text || "").trim();
+  if (!src) return 0;
+  const cjk = (src.match(/[\u3400-\u9FFF\uF900-\uFAFF]/g) || []).length;
+  const latin = (src.replace(/[\u3400-\u9FFF\uF900-\uFAFF]/g, " ").match(/[A-Za-z0-9]+(?:['-][A-Za-z0-9]+)*/g) || []).length;
+  return cjk + latin;
+}
+
+function updateReadingInfoBadge(bodyPath) {
+  const wc = document.querySelector('[data-path="word_count"]');
+  const rt = document.querySelector('[data-path="reading_time"]');
+  const label = document.querySelector(`[data-reading-result-for="${bodyPath}"]`);
+  if (!label) return;
+  const words = Number((wc && wc.value) || 0);
+  const mins = Number((rt && rt.value) || 0);
+  label.textContent = words > 0 && mins > 0 ? `${words} words, ${mins} mins` : "";
+}
+
+function updateReadingMetricsFromBody(bodyPath) {
+  const ta = document.querySelector(`textarea[data-path="${bodyPath}"]`);
+  if (!ta || !ta.value.trim()) {
+    setStatus("请先填写正文内容，再计算阅读信息。", true, true);
+    return;
+  }
+  const words = countWordsFromBody(ta.value);
+  const mins = Math.max(1, Math.ceil(words / READING_WORDS_PER_MIN));
+  const wc = document.querySelector('[data-path="word_count"]');
+  const rt = document.querySelector('[data-path="reading_time"]');
+  if (wc) wc.value = String(words);
+  if (rt) rt.value = String(mins);
+  updateReadingInfoBadge(bodyPath);
+  saveDraft();
+  showToast(`已计算：${words} words, ${mins} mins`);
+}
+
+function bindBodyPreview() {
+  document.querySelectorAll("textarea[data-md='1']").forEach((ta) => {
+    const path = ta.dataset.path;
+    const pv = document.querySelector(`[data-preview-for="${path}"]`);
+    if (!pv) return;
+    const update = () => {
+      pv.innerHTML = renderMarkdown(ta.value);
+      saveDraft();
+    };
+    ta.addEventListener("input", update);
+    update();
+    updateReadingInfoBadge(path);
+  });
+}
+
+function createBodyTools(path, ta) {
+  const box = e("div", { class: "toolbox", "data-body-tool-for": path });
+
+  const title = e("div", { class: "muted", text: "正文增强工具：富文本粘贴 + OSS 一键替换" });
+  box.appendChild(title);
+
+  const profileRow = e("div", { class: "toolbox-row" });
+  const profileSelect = e("select", { "data-oss-profile": "1" });
+  refreshProfileSelect(profileSelect, "");
+  const refreshBtn = e("button", { type: "button", text: "刷新配置档" });
+  refreshBtn.onclick = () => {
+    refreshProfileSelect(profileSelect, profileSelect.value);
+    saveDraft();
+    showToast("配置档列表已刷新");
+  };
+  const cfgLink = e("a", { href: "/publisher/oss-config.html", text: "前往 OSS 配置页" });
+  cfgLink.style.display = "inline-flex";
+  cfgLink.style.alignItems = "center";
+  cfgLink.style.justifyContent = "center";
+  cfgLink.style.border = "1px solid var(--line)";
+  cfgLink.style.borderRadius = "10px";
+  cfgLink.style.padding = "10px";
+  cfgLink.style.background = "#fff";
+  cfgLink.style.color = "var(--text)";
+  cfgLink.style.textDecoration = "none";
+  profileRow.appendChild(profileSelect);
+  profileRow.appendChild(refreshBtn);
+  profileRow.appendChild(cfgLink);
+  box.appendChild(profileRow);
+
+  const folderRow = e("div", { class: "toolbox-row" });
+  const folderMode = e("select", { "data-folder-mode": "1" });
+  folderMode.appendChild(e("option", { value: "time_flat", text: "时间单层目录" }));
+  folderMode.appendChild(e("option", { value: "time_nested", text: "时间双层目录" }));
+  folderMode.appendChild(e("option", { value: "custom", text: "自定义目录" }));
+  const customWrap = e("div", { "data-custom-wrap": "1" });
+  customWrap.style.display = "none";
+  const customDir = e("input", { placeholder: "自定义目录，如 post/2026-03", "data-custom-dir": "1" });
+  customWrap.appendChild(customDir);
+  const placeHolder = e("div");
+  folderRow.appendChild(folderMode);
+  folderRow.appendChild(customWrap);
+  folderRow.appendChild(placeHolder);
+  box.appendChild(folderRow);
+
+  const actionRow = e("div", { class: "inline", style: "margin-top:8px" });
+  const pasteRawBtn = e("button", { type: "button", text: "原样粘贴到正文" });
+  const pasteRichBtn = e("button", { type: "button", text: "富文本转 Markdown 粘贴" });
+  const scanBtn = e("button", { type: "button", text: "扫描 media" });
+  const replaceBtn = e("button", { type: "button", text: "一键上传并替换" });
+  replaceBtn.classList.add("btn");
+  actionRow.appendChild(pasteRawBtn);
+  actionRow.appendChild(pasteRichBtn);
+  actionRow.appendChild(scanBtn);
+  actionRow.appendChild(replaceBtn);
+  box.appendChild(actionRow);
+
+  const status = e("div", { class: "toolbox-status", text: "未执行" });
+  box.appendChild(status);
+
+  folderMode.addEventListener("change", () => {
+    customWrap.style.display = folderMode.value === "custom" ? "block" : "none";
+    saveDraft();
+  });
+
+  profileSelect.addEventListener("change", saveDraft);
+  customDir.addEventListener("input", saveDraft);
+
+  const triggerBodyInput = () => ta.dispatchEvent(new Event("input", { bubbles: true }));
+
+  pasteRawBtn.onclick = async () => {
+    try {
+      const payload = await tools.readClipboardPayload();
+      tools.insertAtCursor(ta, payload.value || "");
+      triggerBodyInput();
+      showToast("已原样粘贴到正文");
+      status.textContent = "已粘贴";
+    } catch (err) {
+      status.textContent = `粘贴失败: ${err.message}`;
+      showToast(err.message, true);
+    }
+  };
+
+  pasteRichBtn.onclick = async () => {
+    try {
+      const payload = await tools.readClipboardPayload();
+      const text = payload.kind === "html" ? tools.htmlToMarkdown(payload.value) : payload.value;
+      tools.insertAtCursor(ta, text || "");
+      triggerBodyInput();
+      status.textContent = payload.kind === "html" ? "已完成富文本转 Markdown 粘贴" : "剪贴板无 HTML，已按纯文本粘贴";
+      showToast(payload.kind === "html" ? "已完成富文本转 Markdown 粘贴" : "已按纯文本粘贴");
+    } catch (err) {
+      status.textContent = `粘贴失败: ${err.message}`;
+      showToast(err.message, true);
+    }
+  };
+
+  scanBtn.onclick = () => {
+    const items = tools.extractMediaRefs(ta.value || "");
+    status.textContent = `扫描完成：发现 ${items.length} 个 media`;
+    showToast(`扫描完成：发现 ${items.length} 个 media`);
+  };
+
+  replaceBtn.onclick = async () => {
+    const profileName = profileSelect.value;
+    const ossConfig = tools.getProfile(profileName);
+    if (!profileName || !ossConfig) {
+      status.textContent = "请先选择有效 OSS 配置档";
+      showToast("请先选择有效 OSS 配置档", true);
+      return;
+    }
+    replaceBtn.disabled = true;
+    try {
+      const result = await tools.replaceMediaInText({
+        rawText: ta.value || "",
+        ossConfig,
+        folderMode: folderMode.value,
+        customDir: customDir.value,
+        timeoutMs: 45000,
+        onStart(info) {
+          status.textContent = info.activeItems.length ? `开始上传，总数 ${info.activeItems.length}` : "未发现可替换 media";
+        },
+        onProgress(evt) {
+          if (evt.phase === "before") {
+            status.textContent = `上传中 ${evt.done}/${evt.total}`;
+            return;
+          }
+          status.textContent = `进行中 ${evt.done}/${evt.total} (成功 ${evt.success} / 失败 ${evt.failed})`;
+        }
+      });
+
+      if (!result.total) {
+        status.textContent = "未执行（正文中没有可替换 media）";
+        return;
+      }
+
+      ta.value = result.replacedText;
+      triggerBodyInput();
+      saveDraft();
+      status.textContent = `替换完成：成功 ${result.success} / 失败 ${result.failed}`;
+      showToast(result.failed ? `替换完成：成功 ${result.success}，失败 ${result.failed}` : `替换完成：成功 ${result.success}`);
+    } catch (err) {
+      status.textContent = `替换失败: ${err.message}`;
+      showToast(err.message, true);
+    } finally {
+      replaceBtn.disabled = false;
+    }
+  };
+
+  return box;
+}
+
+function renderField(f, path) {
+  if (f.type === "object") {
+    const b = e("div", { class: "obj" });
+    b.appendChild(e("label", { text: f.name }));
+    (f.fields || []).forEach((s) => b.appendChild(renderField(s, `${path}.${s.name}`)));
+    return b;
+  }
+
+  if (f.type === "list") {
+    const b = e("div", { class: "field" });
+    b.appendChild(e("label", { text: f.name }));
+    const r = e("div");
+    const add = e("button", { type: "button", text: "添加一项" });
+    add.onclick = () => {
+      const i = e("div", { class: "list-item" });
+      const idx = r.children.length;
+      if (f.itemType === "object") {
+        (f.fields || []).forEach((s) => i.appendChild(renderField(s, `${path}[${idx}].${s.name}`)));
+      } else {
+        i.appendChild(renderField({ name: "item", type: f.itemType || "string" }, `${path}[${idx}]`));
+      }
+      const rm = e("button", { type: "button", text: "删除" });
+      rm.onclick = () => i.remove();
+      i.appendChild(rm);
+      r.appendChild(i);
+    };
+    b.appendChild(r);
+    b.appendChild(add);
+    return b;
+  }
+
+  const b = e("div", { class: "field" });
+  b.appendChild(e("label", { text: f.name }));
+
+  if (f.name === "body") {
+    const wrap = e("div", { class: "md-grid" });
+    const ta = e("textarea", { "data-path": path, "data-md": "1" });
+    if (f.default) ta.value = f.default;
+    const pv = e("div", { class: "md-preview", "data-preview-for": path });
+    wrap.appendChild(ta);
+    wrap.appendChild(pv);
+    b.appendChild(wrap);
+
+    const toolsRow = e("div", { class: "inline", style: "margin-top:8px" });
+    const calcBtn = e("button", { type: "button", text: "计算阅读信息" });
+    calcBtn.onclick = () => updateReadingMetricsFromBody(path);
+    const calcResult = e("span", { "data-reading-result-for": path, text: "" });
+    calcResult.style.fontSize = "12px";
+    calcResult.style.color = "var(--muted)";
+    toolsRow.appendChild(calcBtn);
+    toolsRow.appendChild(calcResult);
+    b.appendChild(toolsRow);
+
+    b.appendChild(createBodyTools(path, ta));
+
+    if (!document.querySelector('[data-path="word_count"]')) {
+      const wc = e("input", { type: "number", "data-path": "word_count" });
+      wc.hidden = true;
+      b.appendChild(wc);
+    }
+    if (!document.querySelector('[data-path="reading_time"]')) {
+      const rt = e("input", { type: "number", "data-path": "reading_time" });
+      rt.hidden = true;
+      b.appendChild(rt);
+    }
+
+    return b;
+  }
+
+  const type = f.type === "datetime" ? "datetime-local" : f.type === "number" ? "number" : f.type === "boolean" ? "checkbox" : "text";
+  const input = e("input", { type, "data-path": path });
+  if (f.default != null) {
+    if (type === "checkbox") input.checked = !!f.default;
+    else if (type === "datetime-local") input.value = String(f.default).slice(0, 16);
+    else input.value = f.default;
+  }
+  if (f.type === "datetime") {
+    const w = e("div", { class: "inline" });
+    const btn = e("button", { type: "button", text: "当前时刻" });
+    btn.onclick = () => { input.value = nowIso().slice(0, 16); };
+    w.appendChild(input);
+    w.appendChild(btn);
+    b.appendChild(w);
+  } else {
+    b.appendChild(input);
+  }
   return b;
 }
-function renderForm(name){const t=templates.find(x=>x.name===name);formRootEl.innerHTML="";if(!t)return;const fs=[...t.fields];if(!fs.some(x=>x.name==="body"))fs.push({name:"body",type:"string"});fs.forEach(f=>formRootEl.appendChild(renderField(f,f.name)));}
-function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));}
-function renderMarkdown(md){if(window.marked&&window.marked.parse)return window.marked.parse(md||"");return `<pre>${escapeHtml(md||"")}</pre>`;}
-function countWordsFromBody(text){const src=String(text||"").trim();if(!src)return 0;const cjk=(src.match(/[\u3400-\u9FFF\uF900-\uFAFF]/g)||[]).length;const latin=(src.replace(/[\u3400-\u9FFF\uF900-\uFAFF]/g," ").match(/[A-Za-z0-9]+(?:['-][A-Za-z0-9]+)*/g)||[]).length;return cjk+latin;}
-function updateReadingInfoBadge(bodyPath){const wc=document.querySelector('[data-path="word_count"]');const rt=document.querySelector('[data-path="reading_time"]');const label=document.querySelector(`[data-reading-result-for="${bodyPath}"]`);if(!label)return;const words=Number(wc&&wc.value||0);const mins=Number(rt&&rt.value||0);label.textContent=words>0&&mins>0?`${words} words, ${mins} mins`:"";}
-function updateReadingMetricsFromBody(bodyPath){const ta=document.querySelector(`textarea[data-path="${bodyPath}"]`);if(!ta||!ta.value.trim()){st("请先填写正文内容，再计算阅读信息。",true,true);return;}const words=countWordsFromBody(ta.value);const mins=Math.max(1,Math.ceil(words/READING_WORDS_PER_MIN));const wc=document.querySelector('[data-path="word_count"]');const rt=document.querySelector('[data-path="reading_time"]');if(wc)wc.value=String(words);if(rt)rt.value=String(mins);updateReadingInfoBadge(bodyPath);saveDraft();showToast(`已计算：${words} words, ${mins} mins`);}
-function bindBodyPreview(){document.querySelectorAll("textarea[data-md='1']").forEach((ta)=>{const path=ta.dataset.path;const pv=document.querySelector(`[data-preview-for="${path}"]`);if(!pv)return;const update=()=>{pv.innerHTML=renderMarkdown(ta.value);saveDraft();};ta.addEventListener("input",update);update();updateReadingInfoBadge(path);});}
-function collect(){const out={};document.querySelectorAll("[data-path]").forEach(el=>{const p=el.dataset.path;let v;if(el.type==="checkbox")v=el.checked;else if(el.type==="number")v=el.value===""?null:Number(el.value);else if(el.type==="datetime-local")v=el.value?`${el.value}:00${nowIso().slice(-6)}`:"";else v=el.value;if(v!==""&&v!==null)setByPath(out,p,v)});return out;}
-featuredFileInput.onchange=(ev)=>{const f=ev.target.files&&ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const rs=r.result;featuredData={name:f.name,mimeType:f.type||"image/png",base64:rs.slice(rs.indexOf(",")+1)};previewImg.src=rs;previewImg.style.display="block";saveDraft();showToast("已选择 Featured 图")};r.readAsDataURL(f)};
-document.addEventListener("paste",(ev)=>{for(const i of ev.clipboardData.items){if(i.type.startsWith("image/")){const f=i.getAsFile();const r=new FileReader();r.onload=()=>{const rs=r.result;featuredData={name:f.name||"featured.png",mimeType:f.type||"image/png",base64:rs.slice(rs.indexOf(",")+1)};previewImg.src=rs;previewImg.style.display="block";saveDraft();showToast("已粘贴 Featured 图")};r.readAsDataURL(f);break}}});
-templateSelect.onchange=()=>{renderForm(templateSelect.value);bindBodyPreview();saveDraft();};
-["input","change"].forEach(evt=>document.addEventListener(evt,(event)=>{if(event.target.closest("#formRoot")||["apiBase","password","slug","template"].includes(event.target.id))saveDraft();}));
-submitBtnEl.onclick=async()=>{try{st("正在发布...",false,true);submitBtnEl.disabled=true;const base=apiBaseInput.value.replace(/\/+$/,"");localStorage.setItem("publisher_api_base",base);localStorage.setItem("publisher_password",passwordInput.value);const data=collect();let s=slugify(slugInput.value);if(!s){s=slugify(data.title||"new-post");slugInput.value=s}const r=await fetch(`${base}/publish`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({template:templateSelect.value,slug:s,password:passwordInput.value,frontmatter:data,featured:featuredData})});const j=await r.json();if(!r.ok)throw new Error(j.error||"发布失败");clearDraft();st(`发布成功\n${j.markdownPath}`,false,true)}catch(err){st(err.message,true,true)}finally{submitBtnEl.disabled=false}};
-(async()=>{const r=await fetch("/publisher/templates.json");const j=await r.json();templates=j.templates||[];templates.forEach(t=>templateSelect.appendChild(e("option",{value:t.name,text:t.name})));if(templates[0]){templateSelect.value=templates[0].name;if(!restoreDraft()){renderForm(templateSelect.value);bindBodyPreview();}}})().catch(err=>st(err.message,true));
+
+function renderForm(name) {
+  const t = templates.find((x) => x.name === name);
+  formRootEl.innerHTML = "";
+  if (!t) return;
+  const fs = [...t.fields];
+  if (!fs.some((x) => x.name === "body")) fs.push({ name: "body", type: "string" });
+  fs.forEach((f) => formRootEl.appendChild(renderField(f, f.name)));
+}
+
+function restoreDraft() {
+  const d = readDraft();
+  if (!d) return false;
+  apiBaseInput.value = d.apiBase || apiBaseInput.value;
+  passwordInput.value = d.password || passwordInput.value;
+  if (d.template && templates.some((t) => t.name === d.template)) templateSelect.value = d.template;
+  renderForm(templateSelect.value);
+  bindBodyPreview();
+  slugInput.value = d.slug || "";
+  applyDraftValues(d.formData || {});
+  restoreBodyToolState(d.bodyToolState || {});
+  bindBodyPreview();
+  return true;
+}
+
+featuredFileInput.onchange = (ev) => {
+  const f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    const rs = r.result;
+    featuredData = { name: f.name, mimeType: f.type || "image/png", base64: rs.slice(rs.indexOf(",") + 1) };
+    previewImg.src = rs;
+    previewImg.style.display = "block";
+    saveDraft();
+    showToast("已选择 Featured 图");
+  };
+  r.readAsDataURL(f);
+};
+
+document.addEventListener("paste", (ev) => {
+  for (const i of ev.clipboardData.items) {
+    if (i.type.startsWith("image/")) {
+      const f = i.getAsFile();
+      const r = new FileReader();
+      r.onload = () => {
+        const rs = r.result;
+        featuredData = { name: f.name || "featured.png", mimeType: f.type || "image/png", base64: rs.slice(rs.indexOf(",") + 1) };
+        previewImg.src = rs;
+        previewImg.style.display = "block";
+        saveDraft();
+        showToast("已粘贴 Featured 图");
+      };
+      r.readAsDataURL(f);
+      break;
+    }
+  }
+});
+
+templateSelect.onchange = () => {
+  renderForm(templateSelect.value);
+  bindBodyPreview();
+  saveDraft();
+};
+
+["input", "change"].forEach((evt) => document.addEventListener(evt, (event) => {
+  if (event.target.closest("#formRoot") || ["apiBase", "password", "slug", "template"].includes(event.target.id)) saveDraft();
+}));
+
+submitBtnEl.onclick = async () => {
+  try {
+    setStatus("正在发布...", false, true);
+    submitBtnEl.disabled = true;
+    const base = apiBaseInput.value.replace(/\/+$/, "");
+    localStorage.setItem("publisher_api_base", base);
+    localStorage.setItem("publisher_password", passwordInput.value);
+
+    const data = collect();
+    let slug = slugify(slugInput.value);
+    if (!slug) {
+      slug = slugify(data.title || "new-post");
+      slugInput.value = slug;
+    }
+
+    const res = await fetch(`${base}/publish`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        template: templateSelect.value,
+        slug,
+        password: passwordInput.value,
+        frontmatter: data,
+        featured: featuredData,
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || "发布失败");
+    clearDraft();
+    setStatus(`发布成功\n${json.markdownPath}`, false, true);
+  } catch (err) {
+    setStatus(err.message, true, true);
+  } finally {
+    submitBtnEl.disabled = false;
+  }
+};
+
+(async () => {
+  const r = await fetch("/publisher/templates.json", { cache: "no-store" });
+  const j = await r.json();
+  templates = j.templates || [];
+  templates.forEach((t) => templateSelect.appendChild(e("option", { value: t.name, text: t.name })));
+  if (!templates[0]) return;
+  templateSelect.value = templates[0].name;
+  if (!restoreDraft()) {
+    renderForm(templateSelect.value);
+    bindBodyPreview();
+  }
+})().catch((err) => setStatus(err.message, true));
 </script>
 </body>
 </html>

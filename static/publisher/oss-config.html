@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Site Template CMS | OSS 配置</title>
+  <link rel="icon" type="image/svg+xml" href="/publisher/favicon.svg" />
+  <script src="/publisher/publisher-media-tools.js"></script>
+  <style>
+    :root{--bg:#eef2f7;--panel:#fff;--line:#d7dee7;--text:#15202b;--muted:#637282;--brand:#0f766e;--brand2:#1e9b86;--danger:#b91c1c}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text)}
+    .layout{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+    .side{position:sticky;top:0;height:100vh;overflow-y:auto;background:linear-gradient(160deg,#0d3e39,#0b2e32);color:#dff7f4;padding:20px}
+    .brand{font-size:20px;font-weight:700;margin-bottom:20px}
+    .nav a{display:block;color:#dff7f4;text-decoration:none;padding:10px 12px;border-radius:10px;margin-bottom:6px}
+    .nav a.active,.nav a:hover{background:rgba(255,255,255,.14)}
+    .main{padding:18px}
+    .top{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+    .top h1{margin:0 0 6px}
+    .muted{color:var(--muted);font-size:13px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input,select,button{width:100%;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px;font-size:14px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .row > *{width:auto}
+    .btn{border:none;background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff;cursor:pointer}
+    #status{font-size:13px;white-space:pre-wrap}
+    .toast-stack{position:fixed;right:18px;top:18px;display:flex;flex-direction:column;gap:10px;z-index:9999;pointer-events:none}
+    .toast{min-width:220px;max-width:360px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--text);box-shadow:0 12px 30px rgba(21,32,43,.12);opacity:0;transform:translateY(8px);animation:toast-in .18s ease forwards}
+    .toast.ok{border-color:#b7e4d7;background:#effaf5;color:#065f46}.toast.err{border-color:#efb6b6;background:#fff5f5;color:#b91c1c}
+    .toast.fade-out{animation:toast-out .22s ease forwards}
+    @keyframes toast-in{to{opacity:1;transform:translateY(0)}}
+    @keyframes toast-out{to{opacity:0;transform:translateY(8px)}}
+    @media (max-width:980px){.layout{grid-template-columns:1fr}.side{position:relative;height:auto;padding:14px}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <div class="brand">Publisher CMS</div>
+    <nav class="nav">
+      <a href="/publisher/">总览</a>
+      <a href="/publisher/profile-manage.html">主页资料</a>
+      <a href="/publisher/home-modules.html">首页模块</a>
+      <a href="/publisher/create.html">新建发布</a>
+      <a href="/publisher/manage.html">内容管理</a>
+      <a href="/publisher/media-upload.html">Media Upload</a>
+      <a href="/publisher/oss-config.html" class="active">OSS 配置</a>
+      <a href="/publisher/template-manage.html">模板管理</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <section class="top">
+      <h1>OSS 图床配置</h1>
+      <div class="muted">集中维护 OSS 配置档，供“Media Upload”和“新建发布”页面直接复用。</div>
+    </section>
+
+    <section class="panel">
+      <div class="grid">
+        <div><label>AccessKeyId</label><input id="accessKeyId" placeholder="填写阿里云 AccessKeyId" /></div>
+        <div><label>AccessKeySecret</label><input id="accessKeySecret" type="password" placeholder="填写阿里云 AccessKeySecret" /></div>
+        <div><label>Region</label><input id="region" placeholder="如 oss-cn-hangzhou" /></div>
+        <div><label>Bucket</label><input id="bucket" placeholder="bucket 名称" /></div>
+        <div><label>Endpoint（可选）</label><input id="endpoint" placeholder="如 https://oss-cn-hangzhou.aliyuncs.com" /></div>
+        <div><label>HTTPS</label><select id="secure"><option value="true">true</option><option value="false">false</option></select></div>
+      </div>
+      <div class="grid" style="margin-top:10px">
+        <div><label>配置档名称</label><input id="profileName" placeholder="例如：生产环境-杭州" /></div>
+        <div><label>已保存配置</label><select id="profileList"></select></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="saveProfile" class="btn" type="button">保存配置</button>
+        <button id="loadProfile" type="button">加载配置</button>
+        <button id="deleteProfile" type="button">删除配置</button>
+        <button id="testConn" type="button">验证 OSS 连接</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div id="status" class="muted">请选择或创建配置档。</div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const tools = window.PublisherMediaTools;
+  const DRAFT_KEY = "publisher_oss_config_draft_v1";
+
+  const el = {
+    accessKeyId: document.getElementById("accessKeyId"),
+    accessKeySecret: document.getElementById("accessKeySecret"),
+    region: document.getElementById("region"),
+    bucket: document.getElementById("bucket"),
+    endpoint: document.getElementById("endpoint"),
+    secure: document.getElementById("secure"),
+    profileName: document.getElementById("profileName"),
+    profileList: document.getElementById("profileList"),
+    saveProfile: document.getElementById("saveProfile"),
+    loadProfile: document.getElementById("loadProfile"),
+    deleteProfile: document.getElementById("deleteProfile"),
+    testConn: document.getElementById("testConn"),
+    status: document.getElementById("status"),
+  };
+
+  const toastStackEl = document.body.appendChild(document.createElement("div"));
+  toastStackEl.className = "toast-stack";
+  function showToast(message, isError = false) {
+    if (!message) return;
+    const toast = document.createElement("div");
+    toast.className = `toast ${isError ? "err" : "ok"}`;
+    toast.textContent = message;
+    toastStackEl.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add("fade-out");
+      setTimeout(() => toast.remove(), 220);
+    }, 1800);
+  }
+
+  function setStatus(message, isError) {
+    el.status.textContent = message || "";
+    el.status.style.color = isError ? "#b91c1c" : "#065f46";
+  }
+
+  function getFormConfig() {
+    return {
+      accessKeyId: el.accessKeyId.value.trim(),
+      accessKeySecret: el.accessKeySecret.value.trim(),
+      region: el.region.value.trim(),
+      bucket: el.bucket.value.trim(),
+      endpoint: el.endpoint.value.trim(),
+      secure: el.secure.value === "true",
+    };
+  }
+
+  function setFormConfig(cfg) {
+    el.accessKeyId.value = cfg && cfg.accessKeyId || "";
+    el.accessKeySecret.value = cfg && cfg.accessKeySecret || "";
+    el.region.value = cfg && cfg.region || "";
+    el.bucket.value = cfg && cfg.bucket || "";
+    el.endpoint.value = cfg && cfg.endpoint || "";
+    el.secure.value = String(!(cfg && cfg.secure === false));
+  }
+
+  function refreshProfileList(selected) {
+    const names = tools.listProfiles();
+    el.profileList.innerHTML = "";
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = names.length ? "请选择配置档" : "暂无配置";
+    el.profileList.appendChild(empty);
+    names.forEach((name) => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      el.profileList.appendChild(opt);
+    });
+    if (selected && names.includes(selected)) el.profileList.value = selected;
+  }
+
+  function saveDraft() {
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+        profileName: el.profileName.value,
+        profileList: el.profileList.value,
+        config: getFormConfig(),
+      }));
+    } catch {}
+  }
+
+  function restoreDraft() {
+    try {
+      const draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "null");
+      if (!draft) return;
+      setFormConfig(draft.config || {});
+      el.profileName.value = draft.profileName || "";
+      refreshProfileList(draft.profileList || "");
+    } catch {
+      refreshProfileList("");
+    }
+  }
+
+  el.saveProfile.addEventListener("click", () => {
+    const name = el.profileName.value.trim();
+    if (!name) {
+      setStatus("请先填写配置档名称", true);
+      showToast("请先填写配置档名称", true);
+      return;
+    }
+    const profiles = tools.readProfiles();
+    profiles[name] = getFormConfig();
+    tools.writeProfiles(profiles);
+    refreshProfileList(name);
+    el.profileList.value = name;
+    saveDraft();
+    setStatus(`已保存配置：${name}`);
+    showToast(`已保存配置：${name}`);
+  });
+
+  el.loadProfile.addEventListener("click", () => {
+    const name = el.profileList.value;
+    const profile = tools.getProfile(name);
+    if (!name || !profile) {
+      setStatus("请选择有效配置", true);
+      showToast("请选择有效配置", true);
+      return;
+    }
+    setFormConfig(profile);
+    el.profileName.value = name;
+    saveDraft();
+    setStatus(`已加载配置：${name}`);
+    showToast(`已加载配置：${name}`);
+  });
+
+  el.deleteProfile.addEventListener("click", () => {
+    const name = el.profileList.value;
+    const profiles = tools.readProfiles();
+    if (!name || !profiles[name]) {
+      setStatus("请选择有效配置", true);
+      showToast("请选择有效配置", true);
+      return;
+    }
+    delete profiles[name];
+    tools.writeProfiles(profiles);
+    refreshProfileList("");
+    el.profileName.value = "";
+    saveDraft();
+    setStatus(`已删除配置：${name}`);
+    showToast(`已删除配置：${name}`);
+  });
+
+  el.testConn.addEventListener("click", async () => {
+    try {
+      setStatus("连接中...");
+      const result = await tools.testOssConnection(getFormConfig());
+      setStatus(`连接成功: ${result.bucket} (${result.region})`);
+      showToast("OSS 连接成功");
+    } catch (err) {
+      setStatus(`连接失败: ${err.message}`, true);
+      showToast(err.message, true);
+    }
+  });
+
+  ["input", "change"].forEach((evt) => {
+    document.addEventListener(evt, (event) => {
+      if (["accessKeyId", "accessKeySecret", "region", "bucket", "endpoint", "secure", "profileName", "profileList"].includes(event.target.id)) {
+        saveDraft();
+      }
+    });
+  });
+
+  refreshProfileList("");
+  restoreDraft();
+</script>
+</body>
+</html>

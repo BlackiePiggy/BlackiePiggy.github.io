@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BlackiePiggy CMS | 模板管理</title>
+  <title>Site Template CMS | 模板管理</title>
   <link rel="icon" type="image/svg+xml" href="/publisher/favicon.svg" />
   <style>
     :root{--bg:#eef2f7;--panel:#fff;--line:#d7dee7;--text:#15202b;--muted:#637282;--brand:#0f766e;--brand2:#1e9b86}
@@ -101,7 +101,7 @@ const saveDraft=()=>{try{sessionStorage.setItem(DRAFT_KEY,JSON.stringify({apiBas
 function restoreDraft(){const d=readDraft();if(!d)return;apiBase.value=d.apiBase||apiBase.value;password.value=d.password||password.value;templateName.value=d.templateName||"";templateContent.value=d.templateContent||"";}
 
 async function loadTemplateList(){
-  const r=await fetch(`${base()}/template-files`);
+  const r=await fetch(`${base()}/template-files`,{cache:"no-store"});
   const j=await r.json();
   if(!r.ok) throw new Error(j.error||"读取模板列表失败");
   templateList.innerHTML="";
@@ -113,7 +113,7 @@ async function loadTemplateList(){
 async function loadOne(name){
   const safe=slugify(name||templateList.value);
   if(!safe) throw new Error("请选择或填写模板名");
-  const r=await fetch(`${base()}/template-file?name=${encodeURIComponent(safe)}`);
+  const r=await fetch(`${base()}/template-file?name=${encodeURIComponent(safe)}`,{cache:"no-store"});
   const j=await r.json();
   if(!r.ok) throw new Error(j.error||"读取模板失败");
   templateName.value=j.item.name;
